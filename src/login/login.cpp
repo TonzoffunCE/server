@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
 
   Copyright (c) 2010-2016 Darkstar Dev Teams
@@ -47,6 +47,12 @@
 #include "login_auth.h"
 #include "login_conf.h"
 #include "message_server.h"
+
+/* wolfSSL */
+#include <wolfssl/options.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfio.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
 
 std::thread messageThread;
 
@@ -142,6 +148,12 @@ int32 do_init(int32 argc, char** argv)
 
     ShowInfo("The login-server is ready to work!");
     ShowInfo("=======================================================================");
+
+    WOLFSSL_CTX* ctx = nullptr;
+    wolfSSL_Init();
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method());
+    wolfSSL_CTX_free(ctx);
+    wolfSSL_Cleanup();
 
     return 0;
 }
