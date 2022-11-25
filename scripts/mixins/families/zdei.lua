@@ -16,7 +16,7 @@ g_mixins.families.zdei = function(mob)
     end)
 
     mob:addListener("ENGAGE", "ZDEI_ENGAGE", function(mobArg, target)
-        mob:setAnimationSub(1)
+        mob:setAnimationSub(math.random(0, 1))
         mob:setLocalVar("changeTime", os.time() + math.random(15, 30))
     end)
 
@@ -39,7 +39,7 @@ g_mixins.families.zdei = function(mob)
                 mob:setAnimationSub(math.random(2, 3))
                 mob:setLocalVar("changeTime", now + math.random(45, 60))
             else
-                mob:setAnimationSub(1)
+                mob:setAnimationSub(math.random(0, 1))
                 mob:setLocalVar("changeTime", now + math.random(15, 30))
             end
         end

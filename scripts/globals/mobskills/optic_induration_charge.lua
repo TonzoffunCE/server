@@ -18,7 +18,9 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     if mob:isNM() or mob:getAnimationSub() >= 2 or utils.chance(75) then
         return 1
     end
-    return 0
+    if mob:getAnimationSub() == 1 then
+        return 0
+    end
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
