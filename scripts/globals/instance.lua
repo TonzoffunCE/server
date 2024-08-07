@@ -34,8 +34,7 @@
 -- - DYNAMIS_WINDURST_D              = 296,
 -- - DYNAMIS_JEUNO_D                 = 297,
 -----------------------------------
-require("scripts/globals/utils")
-require("scripts/globals/zone")
+require('scripts/globals/utils')
 -----------------------------------
 xi = xi or {}
 xi.instance = {}
@@ -161,7 +160,7 @@ xi.instance.lookup =
         { 7701, { 405, 59, -10, 0, 99, 5, 0 }, { 116, 1 }, { 411, 5 } }, -- Nashmeira's Plea
         -- Waking the Colossus / Divine Interference
         -- Forging a New Myth
-        { 7704, { 405, 51, -4, 0, 75, 5, 1 }, { 116, 2 }, { 405, 4 } }, -- TODO: Nyzul Isle Investigation
+        { 7704, { 405, 51,  -4, 0, 75, 5, 1 }, { 116, 2 }, { 411, 5 } }, -- Nyzul Isle Investigation
     },
 
     [xi.zone.EVERBLOOM_HOLLOW] =
@@ -297,10 +296,10 @@ xi.instance.lookup =
 -- Party leader registering
 local checkRegistryReqs = function(player, instanceId)
     local instanceObj = GetCachedInstanceScript(instanceId)
-    if type(instanceObj.registryRequirements) == "function" then
+    if type(instanceObj.registryRequirements) == 'function' then
         return instanceObj.registryRequirements(player)
     else
-        print("xi.instance: checkReqs: registryRequirements function not set for instance: " .. instanceId)
+        print('xi.instance: checkReqs: registryRequirements function not set for instance: ' .. instanceId)
         return false
     end
 end
@@ -308,10 +307,10 @@ end
 -- Further players joining
 local checkEntryReqs = function(player, instanceId)
     local instanceObj = GetCachedInstanceScript(instanceId)
-    if type(instanceObj.entryRequirements) == "function" then
+    if type(instanceObj.entryRequirements) == 'function' then
         return instanceObj.entryRequirements(player)
     else
-        print("xi.instance: checkReqs: entryRequirements function not set for instance: " .. instanceId)
+        print('xi.instance: checkReqs: entryRequirements function not set for instance: ' .. instanceId)
         return false
     end
 end
@@ -323,7 +322,7 @@ xi.instance.onTrigger = function(player, npc, instanceZoneID)
     local zoneLookup = xi.instance.lookup[instanceZoneID]
 
     -- Clear up after possible failed loads
-    player:setLocalVar("INSTANCE_REQUESTED", 0)
+    player:setLocalVar('INSTANCE_REQUESTED', 0)
     local existingInstance = player:getInstance()
     if existingInstance then
         existingInstance:fail()
@@ -333,8 +332,9 @@ xi.instance.onTrigger = function(player, npc, instanceZoneID)
     -- TODO: Handle being valid for multiple instances from the same entrance
     local chosenEntry
     for _, entry in ipairs(zoneLookup) do
-        local instanceId = entry[1]
+        local instanceId    = entry[1]
         local hasValidEntry = checkRegistryReqs(player, instanceId)
+
         if hasValidEntry then
             chosenEntry = entry
             break
@@ -346,53 +346,70 @@ xi.instance.onTrigger = function(player, npc, instanceZoneID)
     end
 
     -- Play the cs + args for that instance
-    local instanceId = chosenEntry[1]
+    local instanceId          = chosenEntry[1]
     local instanceTriggerArgs = chosenEntry[2]
-    local hasValidEntry = checkRegistryReqs(player, instanceId)
+    local hasValidEntry       = checkRegistryReqs(player, instanceId)
+
     if hasValidEntry then
-        player:setLocalVar("INSTANCE_ID", instanceId)
+        player:setLocalVar('INSTANCE_ID', instanceId)
         player:startEvent(unpack(instanceTriggerArgs))
+
         return true
     else
         return false
     end
 end
 
-xi.instance.onEventUpdate = function(player, csid, option)
-    local instanceId = player:getLocalVar("INSTANCE_ID")
-    local party = player:getParty()
-    local npc = player:getEventTarget()
-    local ID = zones[player:getZoneID()]
+xi.instance.onEventUpdate = function(player, csid, option, npc)
+    local instanceId = player:getLocalVar('INSTANCE_ID')
+    local party      = player:getParty()
+    local ID         = zones[player:getZoneID()]
 
     if party ~= nil then
         for _, v in pairs(party) do
-            if v:getID() ~= player:getID() then
+            if
+                v:getID() ~= player:getID() and
+                v:getZoneID() == player:getZoneID()
+            then
                 -- Check entry requirements for party
                 if not checkEntryReqs(v, instanceId) then
                     player:messageText(npc, ID.text.MEMBER_NO_REQS, false)
                     player:instanceEntry(npc, 1)
+
                     return false
                 end
 
                 -- Check everyone is in range
-                if v:getZoneID() == player:getZoneID() and v:checkDistance(player) > 50 then
+                if v:checkDistance(player) > 50 then
                     player:messageText(npc, ID.text.MEMBER_TOO_FAR, false)
                     player:instanceEntry(npc, 1)
+
                     return false
                 end
             end
         end
     end
 
-    if player:getLocalVar("INSTANCE_REQUESTED") == 0 then
+    if player:getLocalVar('INSTANCE_REQUESTED') == 0 then
         player:createInstance(instanceId)
-        player:setLocalVar("INSTANCE_REQUESTED", 1)
+        player:setLocalVar('INSTANCE_REQUESTED', 1)
     end
 
-    return player:getInstance() ~= nil
+    if
+        player:getInstance() ~= nil or
+        (player:getLocalVar('INSTANCE_REQUESTED') > 0 and
+        player:getLocalVar('INSTANCE_REQUESTED') < 10)
+    then
+        -- return true so we don't immediately call the cancel event update (since instances don't immediately load), but
+        -- increment variable to eventually return false if instance fails to load and trigger onInstanceCreatedCallback
+        player:setLocalVar('INSTANCE_REQUESTED', player:getLocalVar('INSTANCE_REQUESTED') + 1)
+        return true
+    else
+        return false
+    end
 end
 
--- "Default" behaviour. It's up to each instance whether or not they want to use this logic
+-- 'Default' behaviour. It's up to each instance whether or not they want to use this logic
 xi.instance.onInstanceCreatedCallback = function(player, instance)
     local zoneLookup = xi.instance.lookup[instance:getZone():getID()]
     local instanceId = instance:getID()
@@ -403,6 +420,7 @@ xi.instance.onInstanceCreatedCallback = function(player, instance)
         local entryInstanceId = entry[1]
         if instanceId == entryInstanceId then
             lookupEntry = entry
+
             break
         end
     end
@@ -410,19 +428,47 @@ xi.instance.onInstanceCreatedCallback = function(player, instance)
     -- If you're in the official entrance zone, try and playout the
     -- entrance animation. Otherwise: go straight to the instance
     if player:getZoneID() == instance:getEntranceZoneID() then
+        -- join initiating player as commander
+        player:setInstance(instance)
+
         -- This packet will trigger the end of the blocking
         -- cutscene and xi.instance.onEventFinish will handle
         -- the transportation
         for _, v in ipairs(player:getParty()) do
-            if v:getID() ~= player:getID() then
-                v:startEvent(unpack(lookupEntry[4]))
-            end
+            if v:getZoneID() == player:getZoneID() then
+                if v:getID() ~= player:getID() then
+                    -- player will be brought into instance either way
+                    -- this makes the animation trigger reliably
+                    v:release()
+                    v:startEvent(unpack(lookupEntry[4]))
 
-            v:setInstance(instance)
-            local npc = player:getEventTarget()
-            if npc ~= nil then
-                v:instanceEntry(npc, 4)
+                    v:setInstance(instance)
+                    local npc = player:getEventTarget()
+                    if npc ~= nil then
+                        v:instanceEntry(npc, 4)
+                    end
+                end
+
+                v:timer(35000, function(playerArg)
+                    -- failsafe to bring all players into instance
+                    -- if a player doesn't receive the event packet, the whole party will be stuck in blackscreen
+                    -- timer is destroyed if onEventFinish works properly and player gets zoned
+                    -- a properly-functioning event loop will take 20s to zoning into the instance
+                    -- this _should_ be completely unnecessary due to the looping logic with INSTANCE_REQUESTED, but just in case
+                    local instanceArg = playerArg:getInstance()
+                    if instanceArg then
+                        print(fmt('Player {} failed to cleanly transition into instance event, forcing entry via setPos.', playerArg:getName()))
+                        playerArg:setPos(0, 0, 0, 0, instanceArg:getZone():getID())
+                    end
+                end)
             end
+        end
+
+        -- finally, send commander in
+        player:startEvent(unpack(lookupEntry[4])) -- will fail if previous event is working as it should, otherwise catches secondary event to enter
+        local npc = player:getEventTarget()
+        if npc ~= nil then
+            player:instanceEntry(npc, 4)
         end
     else
         for _, v in ipairs(player:getParty()) do
@@ -432,12 +478,14 @@ xi.instance.onInstanceCreatedCallback = function(player, instance)
     end
 end
 
-xi.instance.onEventFinish = function(player, csid, option)
+xi.instance.onEventFinish = function(player, csid, option, npc)
     local instance = player:getInstance()
+
     if instance then
-        local instanceZoneId = instance:getZone():getID()
-        local zoneLookup = xi.instance.lookup[instanceZoneId]
+        local instanceZoneId         = instance:getZone():getID()
+        local zoneLookup             = xi.instance.lookup[instanceZoneId]
         local csidEntry, optionEntry = unpack(zoneLookup[1][3])
+
         if csid == csidEntry and option == optionEntry then
             for _, v in ipairs(player:getParty()) do
                 v:setPos(0, 0, 0, 0, instance:getZone():getID())
@@ -451,7 +499,7 @@ xi.instance.onEventFinish = function(player, csid, option)
 end
 
 local function setInstanceLastTimeUpdateMessage(instance, players, remainingTimeLimit, text)
-    local message = 0
+    local message        = 0
     local lastTimeUpdate = instance:getLastTimeUpdate()
 
     if lastTimeUpdate == 0 and remainingTimeLimit < 600 then
@@ -480,23 +528,23 @@ local function setInstanceLastTimeUpdateMessage(instance, players, remainingTime
 end
 
 xi.instance.updateInstanceTime = function(instance, elapsed, text)
-    local players = instance:getChars()
-    local remainingTimeLimit = (instance:getTimeLimit()) * 60 - (elapsed / 1000)
-    local wipeTime = instance:getWipeTime()
+    local players            = instance:getChars()
+    local remainingTimeLimit = instance:getTimeLimit() * 60 - (elapsed / 1000)
+    local wipeTime           = instance:getWipeTime()
 
     if
         remainingTimeLimit < 0 or
-        (
-            wipeTime ~= 0 and
-            (elapsed - wipeTime) / 1000 > 180
+        (wipeTime ~= 0 and (elapsed - wipeTime) / 1000 > 180
         )
     then
         instance:fail()
+
         return
     end
 
     if wipeTime == 0 then
         local wipe = true
+
         for i, player in pairs(players) do
             if player:getHP() ~= 0 then
                 wipe = false

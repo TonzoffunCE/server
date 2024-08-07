@@ -3,11 +3,9 @@
 --  Mob: Punctured Percy
 -- BCNM: Celery
 -----------------------------------
-require("scripts/globals/status")
------------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     local mobId = mob:getID()
     DespawnMob(mobId - 3)
     DespawnMob(mobId - 2)

@@ -67,6 +67,9 @@ static constexpr float server_tick_rate = 2.5f;
 // Update every 400ms
 static constexpr float server_tick_interval = 1000.0f / server_tick_rate;
 
+// Check Trigger Areas every 200ms
+static constexpr float server_trigger_area_interval = server_tick_interval / 2.0f;
+
 typedef std::map<uint64, map_session_data_t*> map_session_list_t;
 extern map_session_list_t                     map_session_list;
 
@@ -76,7 +79,7 @@ extern uint16  map_port;
 extern inline map_session_data_t* mapsession_getbyipp(uint64 ipp);
 extern inline map_session_data_t* mapsession_createsession(uint32 ip, uint16 port);
 
-extern std::unique_ptr<SqlConnection> sql;
+extern std::unique_ptr<SqlConnection> _sql;
 
 extern bool gLoadAllLua;
 

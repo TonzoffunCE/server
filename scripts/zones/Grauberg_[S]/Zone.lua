@@ -1,14 +1,17 @@
 -----------------------------------
 -- Zone: Grauberg_[S] (89)
 -----------------------------------
-local ID = require('scripts/zones/Grauberg_[S]/IDs')
-require('scripts/globals/status')
-require('scripts/globals/helm')
+require('scripts/globals/dark_ixion')
 -----------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.HARVESTING)
+    xi.helm.initZone(zone, xi.helmType.HARVESTING)
+    xi.darkixion.zoneOnInit(zone)
+end
+
+zoneObject.onGameHour = function(zone)
+    xi.darkixion.zoneOnGameHour(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -29,24 +32,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onZoneWeatherChange = function(weather)
-    local npc = GetNPCByID(ID.npc.INDESCRIPT_MARKINGS)
-
-    if npc ~= nil then
-        if
-            weather == xi.weather.WIND or
-            weather == xi.weather.GALES
-        then
-            npc:setStatus(xi.status.NORMAL)
-        else
-            npc:setStatus(xi.status.DISAPPEAR)
-        end
-    end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

@@ -20,27 +20,27 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 */
 
 #include "trustentity.h"
-#include "../ai/ai_container.h"
-#include "../ai/controllers/trust_controller.h"
-#include "../ai/helpers/pathfind.h"
-#include "../ai/helpers/targetfind.h"
-#include "../ai/states/ability_state.h"
-#include "../ai/states/attack_state.h"
-#include "../ai/states/magic_state.h"
-#include "../ai/states/mobskill_state.h"
-#include "../ai/states/range_state.h"
-#include "../ai/states/weaponskill_state.h"
-#include "../attack.h"
-#include "../enmity_container.h"
-#include "../mob_spell_container.h"
-#include "../mob_spell_list.h"
-#include "../packets/char_health.h"
-#include "../packets/entity_set_name.h"
-#include "../packets/entity_update.h"
-#include "../recast_container.h"
-#include "../status_effect_container.h"
-#include "../utils/battleutils.h"
-#include "../utils/trustutils.h"
+#include "ai/ai_container.h"
+#include "ai/controllers/trust_controller.h"
+#include "ai/helpers/pathfind.h"
+#include "ai/helpers/targetfind.h"
+#include "ai/states/ability_state.h"
+#include "ai/states/attack_state.h"
+#include "ai/states/magic_state.h"
+#include "ai/states/mobskill_state.h"
+#include "ai/states/range_state.h"
+#include "ai/states/weaponskill_state.h"
+#include "attack.h"
+#include "enmity_container.h"
+#include "mob_spell_container.h"
+#include "mob_spell_list.h"
+#include "packets/char_health.h"
+#include "packets/entity_set_name.h"
+#include "packets/entity_update.h"
+#include "recast_container.h"
+#include "status_effect_container.h"
+#include "utils/battleutils.h"
+#include "utils/trustutils.h"
 
 CTrustEntity::CTrustEntity(CCharEntity* PChar)
 : CMobEntity()
@@ -50,13 +50,19 @@ CTrustEntity::CTrustEntity(CCharEntity* PChar)
     allegiance                  = ALLEGIANCE_TYPE::PLAYER;
     m_MobSkillList              = 0;
     PMaster                     = PChar;
-    m_MovementType              = MELEE_RANGE;
     m_IsClaimable               = false;
     m_bReleaseTargIDOnDisappear = true;
     spawnAnimation              = SPAWN_ANIMATION::SPECIAL; // Initial spawn has the special spawn-in animation
 
-    PAI = std::make_unique<CAIContainer>(this, std::make_unique<CPathFind>(this), std::make_unique<CTrustController>(PChar, this),
+    PAI = std::make_unique<CAIContainer>(this,
+                                         std::make_unique<CPathFind>(this),
+                                         std::make_unique<CTrustController>(PChar, this),
                                          std::make_unique<CTargetFind>(this));
+}
+
+CTrustEntity::~CTrustEntity()
+{
+    TracyZoneScoped;
 }
 
 void CTrustEntity::PostTick()
@@ -148,7 +154,7 @@ void CTrustEntity::OnAbility(CAbilityState& state, action_t& action)
 
             float distance = PAbility->getRange();
 
-            PAI->TargetFind->findWithinArea(this, AOE_RADIUS::ATTACKER, distance);
+            PAI->TargetFind->findWithinArea(this, AOE_RADIUS::ATTACKER, distance, FINDFLAGS_NONE, PAbility->getValidTarget());
 
             uint16 prevMsg = 0;
             for (auto&& PTargetFound : PAI->TargetFind->m_targets)
@@ -288,17 +294,10 @@ void CTrustEntity::OnRangedAttack(CRangeState& state, action_t& action)
     // loop for barrage hits, if a miss occurs, the loop will end
     for (uint8 i = 1; i <= hitCount; ++i)
     {
-        if (PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_PERFECT_DODGE, 0))
-        {
-            actionTarget.messageID  = 32;
-            actionTarget.reaction   = REACTION::EVADE;
-            actionTarget.speceffect = SPECEFFECT::NONE;
-            hitCount                = i; // end barrage, shot missed
-        }
-        else if (xirand::GetRandomNumber(100) < battleutils::GetRangedHitRate(this, PTarget, isBarrage)) // hit!
+        if (xirand::GetRandomNumber(100) < battleutils::GetRangedHitRate(this, PTarget, isBarrage)) // hit!
         {
             // absorbed by shadow
-            if (battleutils::IsAbsorbByShadow(PTarget))
+            if (battleutils::IsAbsorbByShadow(PTarget, this))
             {
                 shadowsTaken++;
             }
@@ -444,7 +443,7 @@ void CTrustEntity::OnRangedAttack(CRangeState& state, action_t& action)
         uint16 power = StatusEffectContainer->GetStatusEffect(EFFECT_SANGE)->GetPower();
 
         // remove shadows
-        while (realHits-- && xirand::GetRandomNumber(100) <= power && battleutils::IsAbsorbByShadow(this))
+        while (realHits-- && xirand::GetRandomNumber(100) <= power && battleutils::IsAbsorbByShadow(this, this))
         {
             ;
         }
@@ -540,11 +539,11 @@ void CTrustEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& act
         PAI->TargetFind->reset();
         if (PWeaponSkill->isAoE())
         {
-            PAI->TargetFind->findWithinArea(PBattleTarget, AOE_RADIUS::TARGET, 10);
+            PAI->TargetFind->findWithinArea(PBattleTarget, AOE_RADIUS::TARGET, 10, FINDFLAGS_NONE, TARGET_NONE);
         }
         else
         {
-            PAI->TargetFind->findSingleTarget(PBattleTarget);
+            PAI->TargetFind->findSingleTarget(PBattleTarget, FINDFLAGS_NONE, TARGET_NONE);
         }
 
         // Assumed, it's very difficult to produce this due to WS being nearly instant
@@ -573,10 +572,10 @@ void CTrustEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& act
 
             actionTarget_t& actionTarget = actionList.getNewActionTarget();
 
-            uint16         tpHitsLanded;
-            uint16         extraHitsLanded;
-            int32          damage;
-            CBattleEntity* taChar = battleutils::getAvailableTrickAttackChar(this, PTarget);
+            uint16         tpHitsLanded    = 0;
+            uint16         extraHitsLanded = 0;
+            int32          damage          = 0;
+            CBattleEntity* taChar          = battleutils::getAvailableTrickAttackChar(this, PTarget);
 
             actionTarget.reaction                           = REACTION::NONE;
             actionTarget.speceffect                         = SPECEFFECT::NONE;

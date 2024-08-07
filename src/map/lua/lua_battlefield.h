@@ -71,13 +71,16 @@ public:
     void setRecord(std::string const& name, uint32 seconds);
     void setStatus(uint8 status);
     void setLocalVar(std::string const& name, uint64_t value);
-    bool loadMobs();
-    bool spawnLoot(sol::object const& PEntityObj);
     auto insertEntity(uint16 targid, bool ally, bool inBattlefield) -> std::optional<CLuaBaseEntity>;
     bool cleanup(bool cleanup);
     void win();
     void lose();
-    void addGroups(sol::table groups, bool hasMultipleArenas);
+    void addGroups(sol::table const& groups, bool hasMultipleArenas);
+
+    bool operator==(const CLuaBattlefield& other) const
+    {
+        return this->m_PLuaBattlefield == other.m_PLuaBattlefield;
+    }
 
     static void Register();
 };

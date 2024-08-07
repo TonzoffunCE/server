@@ -6,11 +6,6 @@
 -- Dilapidated Gate : !pos -259 -30 276 25
 -- Justinius        : !pos 76 -34 68 26
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.THE_SAVAGE)
 
@@ -55,7 +50,7 @@ mission.sections =
             {
                 [32001] = function(player, csid, option, npc)
                     if
-                        player:getLocalVar('battlefieldWin') == 961 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.SAVAGE and
                         mission:getVar(player, 'Status') == 1
                     then
                         mission:setVar(player, 'Status', 2)

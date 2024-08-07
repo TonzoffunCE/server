@@ -56,9 +56,9 @@ namespace PacketGuard
         // NOTE: You should rate limit any packet that a player can
         //       send at will that results in an immediate database hit
         // ratelimitList[0x03B] = 1; // Mannequin Equip
-        ratelimitList[0x05D] = 2; // Emotes
-        ratelimitList[0x11B] = 2; // Set Job Master Display
-        ratelimitList[0x11D] = 2; // Jump
+        ratelimitList[0x05D] = 2000; // Emotes
+        ratelimitList[0x11B] = 2000; // Set Job Master Display
+        ratelimitList[0x11D] = 2000; // Jump
     }
 
     bool PacketIsValidForPlayerState(CCharEntity* PChar, uint16 SmallPD_Type)
@@ -86,17 +86,17 @@ namespace PacketGuard
         TracyZoneScoped;
         using namespace std::chrono;
         uint32 lastPacketRecievedTime = PChar->m_PacketRecievedTimestamps[SmallPD_Type];
-        uint32 timeNowSeconds         = static_cast<uint32>(time_point_cast<seconds>(server_clock::now()).time_since_epoch().count());
+        uint32 timeNowMilliseconds    = static_cast<uint32>(time_point_cast<milliseconds>(server_clock::now()).time_since_epoch().count());
         uint32 ratelimitTime          = ratelimitList[SmallPD_Type];
 
-        PChar->m_PacketRecievedTimestamps[SmallPD_Type] = timeNowSeconds;
+        PChar->m_PacketRecievedTimestamps[SmallPD_Type] = timeNowMilliseconds;
 
         if (lastPacketRecievedTime == 0 || ratelimitTime == 0)
         {
             return false;
         }
 
-        return timeNowSeconds - lastPacketRecievedTime < ratelimitList[SmallPD_Type];
+        return timeNowMilliseconds - lastPacketRecievedTime < ratelimitList[SmallPD_Type];
     }
 
     void PrintPacketList(CCharEntity* PChar)
@@ -112,12 +112,19 @@ namespace PacketGuard
         // Sort
         using pair_t = std::pair<std::string, uint32>;
         std::vector<pair_t> sortedVec;
+        sortedVec.reserve(packetCounterMap.size());
         for (auto& entry : packetCounterMap)
         {
             sortedVec.emplace_back(entry);
         }
-        std::sort(sortedVec.begin(), sortedVec.end(), [](pair_t& a, pair_t& b)
-                  { return a.second < b.second; });
+
+        // clang-format off
+        std::sort(sortedVec.begin(), sortedVec.end(),
+        [](pair_t& a, pair_t& b)
+        {
+            return a.second < b.second;
+        });
+        // clang-format on
 
         // Print
         std::string output;
@@ -128,5 +135,10 @@ namespace PacketGuard
         }
         output += "=======================================\n";
         ShowInfo(output);
+    }
+
+    auto GetPacketAllowList() -> std::unordered_map<CHAR_SUBSTATE, std::unordered_map<uint16, bool>>&
+    {
+        return allowList;
     }
 } // namespace PacketGuard

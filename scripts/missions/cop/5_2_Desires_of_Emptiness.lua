@@ -9,13 +9,7 @@
 -- _0m0 (Flux 3) : !pos -340 -2.5 140 22
 -- Cid           : !pos -12 -12 1 237
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/utils')
-require('scripts/globals/zone')
------------------------------------
-local promyvionVahzlID = require("scripts/zones/Promyvion-Vahzl/IDs")
+local promyvionVahzlID = zones[xi.zone.PROMYVION_VAHZL]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.DESIRES_OF_EMPTINESS)
@@ -210,10 +204,17 @@ mission.sections =
 
                 [32001] = function(player, csid, option, npc)
                     if
-                        player:getLocalVar('battlefieldWin') == 864 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.DESIRES_OF_EMPTINESS and
                         mission:getVar(player, 'Status') == 2
                     then
                         mission:setVar(player, 'Status', 3)
+
+                        -- NOTE: Only players on this mission are transported here on completion of
+                        -- the battlefield.  All other players will remain at the location of the
+                        -- 32001 event finish, and it is vital that arg7 (canSkipCS) is set, else
+                        -- the player will receive a black screen.
+
+                        player:setPos(-340.00, -100.25, 140.00, 64, xi.zone.BEAUCEDINE_GLACIER)
                     end
                 end,
             },

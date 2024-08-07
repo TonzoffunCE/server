@@ -37,22 +37,21 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include <cmath>
 
 CTargetFind::CTargetFind(CBattleEntity* PBattleEntity)
+: isPlayer(false)
+, m_radius(0.0f)
+, m_PRadiusAround(nullptr)
+, m_PBattleEntity(PBattleEntity)
+, m_PMasterTarget(nullptr)
+, m_PTarget(nullptr)
+, m_zone(0)
+, m_findType{}
+, m_findFlags(0)
+, m_conal(false)
+, m_scalar(0.0f)
+, m_APoint(nullptr)
+, m_BPoint{}
+, m_CPoint{}
 {
-    isPlayer          = false;
-    m_scalar          = 0.f;
-    m_BPoint.x        = 0.f;
-    m_BPoint.y        = 0.f;
-    m_BPoint.z        = 0.f;
-    m_BPoint.moving   = 0;
-    m_BPoint.rotation = 0;
-    m_CPoint.x        = 0.f;
-    m_CPoint.y        = 0.f;
-    m_CPoint.z        = 0.f;
-    m_CPoint.moving   = 0;
-    m_CPoint.rotation = 0;
-
-    m_PBattleEntity = PBattleEntity;
-
     reset();
 }
 
@@ -71,9 +70,9 @@ void CTargetFind::reset()
     m_PMasterTarget = nullptr;
 }
 
-void CTargetFind::findSingleTarget(CBattleEntity* PTarget, uint8 flags)
+void CTargetFind::findSingleTarget(CBattleEntity* PTarget, uint8 findFlags, uint16 targetFlags)
 {
-    m_findFlags     = flags;
+    m_findFlags     = findFlags;
     m_zone          = m_PBattleEntity->getZone();
     m_PTarget       = nullptr;
     m_PRadiusAround = &PTarget->loc.p;
@@ -81,12 +80,13 @@ void CTargetFind::findSingleTarget(CBattleEntity* PTarget, uint8 flags)
     addEntity(PTarget, false);
 }
 
-void CTargetFind::findWithinArea(CBattleEntity* PTarget, AOE_RADIUS radiusType, float radius, uint8 flags)
+void CTargetFind::findWithinArea(CBattleEntity* PTarget, AOE_RADIUS radiusType, float radius, uint8 findFlags, uint16 targetFlags)
 {
     TracyZoneScoped;
-    m_findFlags = flags;
-    m_radius    = radius;
-    m_zone      = m_PBattleEntity->getZone();
+    m_findFlags   = findFlags;
+    m_targetFlags = targetFlags;
+    m_radius      = radius;
+    m_zone        = m_PBattleEntity->getZone();
 
     if (radiusType == AOE_RADIUS::ATTACKER)
     {
@@ -187,10 +187,11 @@ void CTargetFind::findWithinArea(CBattleEntity* PTarget, AOE_RADIUS radiusType, 
     }
 }
 
-void CTargetFind::findWithinCone(CBattleEntity* PTarget, float distance, float angle, uint8 flags)
+void CTargetFind::findWithinCone(CBattleEntity* PTarget, float distance, float angle, uint8 findFlags, uint16 targetFlags, uint8 aoeType)
 {
-    m_findFlags = flags;
-    m_conal     = true;
+    m_findFlags   = findFlags;
+    m_targetFlags = targetFlags;
+    m_conal       = true;
 
     m_APoint = &m_PBattleEntity->loc.p;
 
@@ -198,7 +199,7 @@ void CTargetFind::findWithinCone(CBattleEntity* PTarget, float distance, float a
 
     // Confirmation on the center of cones is still needed for mob skills; player skills seem to be facing angle
     // uint8 angleToTarget = worldAngle(m_PBattleEntity->loc.p, PTarget->loc.p);
-    uint8 angleToTarget = m_APoint->rotation;
+    uint8 angleToTarget = relativeAngle(m_APoint->rotation, 128 * (aoeType == 8)); // adds 180 degree rotation if rear type
 
     // "Left" and "Right" are like the entity's face - "left" means "turning to the left" NOT "left when looking overhead"
     // Remember that rotation increases when turning to the right, and decreases when turning to the left
@@ -225,7 +226,7 @@ void CTargetFind::findWithinCone(CBattleEntity* PTarget, float distance, float a
     // calculate scalar
     m_scalar = (m_BPoint.x * m_CPoint.z) - (m_BPoint.z * m_CPoint.x);
 
-    findWithinArea(PTarget, AOE_RADIUS::ATTACKER, distance);
+    findWithinArea(PTarget, AOE_RADIUS::ATTACKER, distance, findFlags, targetFlags);
 }
 
 void CTargetFind::addAllInMobList(CBattleEntity* PTarget, bool withPet)
@@ -289,7 +290,10 @@ void CTargetFind::addAllInParty(CBattleEntity* PTarget, bool withPet)
     {
         static_cast<CCharEntity*>(PTarget)->ForPartyWithTrusts([this, withPet](CBattleEntity* PMember)
         {
-            addEntity(PMember, withPet);
+            if (!PMember->isInMogHouse())
+            {
+                addEntity(PMember, withPet);
+            }
         });
     }
     else
@@ -338,7 +342,7 @@ void CTargetFind::addAllInRange(CBattleEntity* PTarget, float radius, ALLEGIANCE
                     if (PBattleEntity && isWithinArea(&(PBattleEntity->loc.p)) && !PBattleEntity->isDead() &&
                         PBattleEntity->allegiance == ALLEGIANCE_TYPE::PLAYER)
                     {
-                        m_targets.push_back(PBattleEntity);
+                        m_targets.emplace_back(PBattleEntity);
                     }
                 }
             }
@@ -350,7 +354,7 @@ void CTargetFind::addAllInRange(CBattleEntity* PTarget, float radius, ALLEGIANCE
             {
                 if (PChar && isWithinArea(&(PChar->loc.p)) && !PChar->isDead())
                 {
-                    m_targets.push_back(PChar);
+                    m_targets.emplace_back(PChar);
                 }
             });
             // clang-format on
@@ -362,13 +366,13 @@ void CTargetFind::addEntity(CBattleEntity* PTarget, bool withPet)
 {
     if (validEntity(PTarget))
     {
-        m_targets.push_back(PTarget);
+        m_targets.emplace_back(PTarget);
     }
 
     // add my pet too, if its allowed
     if (withPet && PTarget->PPet != nullptr && validEntity(PTarget->PPet))
     {
-        m_targets.push_back(PTarget->PPet);
+        m_targets.emplace_back(PTarget->PPet);
     }
 }
 
@@ -452,6 +456,14 @@ bool CTargetFind::validEntity(CBattleEntity* PTarget)
     }
 
     if (m_PTarget->allegiance != PTarget->allegiance)
+    {
+        return false;
+    }
+
+    // If offensive, don't target other entities with same allegiance
+    // Cures can be AoE with Accession and Majesty, ideally we would use SPELLGROUP or some other mechanism, but TargetFind wasn't designed with that in mind
+    if ((m_targetFlags & TARGET_ENEMY) && !(m_targetFlags & TARGET_PLAYER_PARTY) &&
+        m_PBattleEntity->allegiance == PTarget->allegiance)
     {
         return false;
     }

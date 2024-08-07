@@ -1,8 +1,7 @@
 -----------------------------------
 -- Zone: Vunkerl_Inlet_[S] (83)
 -----------------------------------
-local ID = require('scripts/zones/Vunkerl_Inlet_[S]/IDs')
-require('scripts/globals/status')
+local ID = zones[xi.zone.VUNKERL_INLET_S]
 -----------------------------------
 local zoneObject = {}
 
@@ -24,15 +23,6 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onZoneWeatherChange = function(weather)
-    local npc = GetNPCByID(ID.npc.INDESCRIPT_MARKINGS) -- Indescript Markings
-
-    if npc ~= nil then
-        if weather == xi.weather.FOG or weather == xi.weather.THUNDER then
-            npc:setStatus(xi.status.DISAPPEAR)
-        elseif VanadielHour() >= 16 or VanadielHour() <= 6 then
-            npc:setStatus(xi.status.NORMAL)
-        end
-    end
 end
 
 zoneObject.onGameHour = function(zone)
@@ -52,10 +42,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

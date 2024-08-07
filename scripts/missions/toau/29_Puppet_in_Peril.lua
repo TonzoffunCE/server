@@ -5,13 +5,6 @@
 -- !addmission 4 28
 -- Ornamental Door : !pos 299 0 -199 67
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/keyitems')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.TOAU, xi.mission.id.toau.PUPPET_IN_PERIL)
 
@@ -45,7 +38,7 @@ mission.sections =
                 end,
 
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 1156 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.PUPPET_IN_PERIL then
                         mission:complete(player)
                     end
                 end,

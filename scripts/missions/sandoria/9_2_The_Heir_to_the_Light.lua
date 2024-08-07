@@ -9,15 +9,7 @@
 -- (_6h4) Great Hall     : !pos 0 -1 13 233
 -- _5a0: Heavy Stone Dr  : !pos -39 4.823 20 190
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-local chateauID = require("scripts/zones/Chateau_dOraguille/IDs")
+local chateauID = zones[xi.zone.CHATEAU_DORAGUILLE]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.THE_HEIR_TO_THE_LIGHT)
@@ -215,7 +207,7 @@ mission.sections =
                     mission:complete(player)
                     mission:setVar(player, 'Option', 1)
 
-                    if not npcUtil.giveItem(player, xi.items.SAN_DORIAN_FLAG) then
+                    if not npcUtil.giveItem(player, xi.item.SAN_DORIAN_FLAG) then
                         mission:setVar(player, 'Flag', 1)
                     end
                 end,
@@ -288,7 +280,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 3 and
-                        player:getLocalVar('battlefieldWin') == 516
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.HEIR_TO_THE_LIGHT
                     then
                         player:setMissionStatus(mission.areaId, 4)
                     end
@@ -349,7 +341,7 @@ mission.sections =
                 -- with one conditional, but playing it safe.
                 onTrigger = function(player, npc)
                     if mission:getVar(player, 'Flag') == 1 then
-                        if npcUtil.giveItem(player, xi.items.SAN_DORIAN_FLAG) then
+                        if npcUtil.giveItem(player, xi.item.SAN_DORIAN_FLAG) then
                             mission:setVar(player, 'Flag', 0)
                         end
                     end

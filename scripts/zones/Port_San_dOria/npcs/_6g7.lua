@@ -3,8 +3,6 @@
 --  NPC: Door: Arrivals Entrance
 -- !pos -24 -8 15 232
 -----------------------------------
-require("scripts/globals/settings")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -14,14 +12,12 @@ entity.onTrigger = function(player, npc)
     if player:getZPos() >= 12 then
         player:startEvent(518)
     end
-
-    return 1
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

@@ -71,6 +71,26 @@ void CLatentEffectContainer::DelLatentEffects(uint8 reqLvl, uint8 slot)
                              m_LatentEffectList.end());
 }
 
+/************************************************************************
+*                                                                       *
+* Returns true if no latents for slot are inactive                      *
+*                                                                       *
+ ************************************************************************/
+
+bool CLatentEffectContainer::HasAllLatentsActive(uint8 slot)
+{
+    auto allActive = true;
+    for (auto iter = m_LatentEffectList.begin(); iter != m_LatentEffectList.end(); ++iter)
+    {
+        CLatentEffect& latent = *iter;
+        if (!latent.IsActivated() && latent.GetSlot() == slot)
+        {
+            allActive = false;
+        }
+    }
+    return allActive;
+}
+
 void CLatentEffectContainer::AddLatentEffect(LATENT conditionID, uint16 conditionValue, Mod modID, int16 modValue)
 {
     m_LatentEffectList.emplace_back(m_POwner, conditionID, conditionValue, MAX_SLOTTYPE, modID, modValue);
@@ -139,6 +159,25 @@ void CLatentEffectContainer::CheckLatentsTP()
             case LATENT::SIGIL_REFRESH_BONUS:
                 return ProcessLatentEffect(latentEffect);
                 break;
+            default:
+                break;
+        }
+        return false;
+    });
+}
+
+/************************************************************************
+*                                                                       *
+* Checks all latents that are occur during WS and activates them        *
+*                                                                       *
+ ************************************************************************/
+void CLatentEffectContainer::CheckLatentsWS(bool isDuringWs)
+{
+    ProcessLatentEffects([this, isDuringWs](CLatentEffect& latentEffect) {
+        switch (latentEffect.GetConditionsID())
+        {
+            case LATENT::DURING_WS:
+                return ProcessLatentEffect(latentEffect, isDuringWs);
             default:
                 break;
         }
@@ -265,6 +304,7 @@ void CLatentEffectContainer::CheckLatentsStatusEffect()
         switch (latentEffect.GetConditionsID())
         {
             case LATENT::STATUS_EFFECT_ACTIVE:
+            case LATENT::WEATHER_CONDITION:
             case LATENT::WEATHER_ELEMENT:
             case LATENT::NATION_CONTROL:
                 return ProcessLatentEffect(latentEffect);
@@ -332,14 +372,11 @@ void CLatentEffectContainer::CheckLatentsRollSong()
 void CLatentEffectContainer::CheckLatentsDay()
 {
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::TIME_OF_DAY)
         {
-            case LATENT::TIME_OF_DAY:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -353,14 +390,11 @@ void CLatentEffectContainer::CheckLatentsMoonPhase()
 {
     TracyZoneScoped;
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::MOON_PHASE)
         {
-            case LATENT::MOON_PHASE:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -403,14 +437,11 @@ void CLatentEffectContainer::CheckLatentsHours()
 {
     TracyZoneScoped;
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::HOUR_OF_DAY)
         {
-            case LATENT::HOUR_OF_DAY:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -421,13 +452,15 @@ void CLatentEffectContainer::CheckLatentsHours()
 * activates them if the conditions are met.                             *
 *                                                                       *
  ************************************************************************/
-void CLatentEffectContainer::CheckLatentsPartyMembers(size_t members)
+void CLatentEffectContainer::CheckLatentsPartyMembers(size_t members, size_t trustCount)
 {
-    ProcessLatentEffects([this, members](CLatentEffect& latentEffect) {
+    ProcessLatentEffects([this, members, trustCount](CLatentEffect& latentEffect) {
+        size_t totalMembers = members + trustCount;
+
         switch (latentEffect.GetConditionsID())
         {
             case LATENT::PARTY_MEMBERS:
-                if (latentEffect.GetConditionsValue() <= members)
+                if (latentEffect.GetConditionsValue() <= totalMembers)
                 {
                     return latentEffect.Activate();
                 }
@@ -436,16 +469,22 @@ void CLatentEffectContainer::CheckLatentsPartyMembers(size_t members)
                     return latentEffect.Deactivate();
                 }
             case LATENT::PARTY_MEMBERS_IN_ZONE:
-                if (latentEffect.GetConditionsValue() <= members)
+                if (latentEffect.GetConditionsValue() <= totalMembers)
                 {
                     auto inZone = 0;
                     for (size_t m = 0; m < members; ++m)
                     {
-                        auto* PMember = (CCharEntity*)m_POwner->PParty->members.at(m);
-                        if (PMember->getZone() == m_POwner->getZone())
+                        auto* PMember = dynamic_cast<CCharEntity*>(m_POwner->PParty->members.at(m));
+                        if (PMember != nullptr && PMember->getZone() == m_POwner->getZone())
                         {
                             inZone++;
                         }
+                    }
+
+                    auto* PLeader = dynamic_cast<CCharEntity*>(m_POwner->PParty->GetLeader());
+                    if (PLeader != nullptr && m_POwner->getZone() == PLeader->getZone())
+                    {
+                        inZone = inZone + static_cast<int>(trustCount);
                     }
 
                     if (inZone == latentEffect.GetConditionsValue())
@@ -472,14 +511,11 @@ void CLatentEffectContainer::CheckLatentsPartyMembers(size_t members)
 void CLatentEffectContainer::CheckLatentsPartyJobs()
 {
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::JOB_IN_PARTY)
         {
-            case LATENT::JOB_IN_PARTY:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -493,14 +529,11 @@ void CLatentEffectContainer::CheckLatentsPartyJobs()
 void CLatentEffectContainer::CheckLatentsPartyAvatar()
 {
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::AVATAR_IN_PARTY)
         {
-            case LATENT::AVATAR_IN_PARTY:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -518,6 +551,8 @@ void CLatentEffectContainer::CheckLatentsJobLevel()
         {
             case LATENT::JOB_MULTIPLE:
             case LATENT::JOB_MULTIPLE_AT_NIGHT:
+            case LATENT::JOB_LEVEL_BELOW:
+            case LATENT::JOB_LEVEL_ABOVE:
                 return ProcessLatentEffect(latentEffect);
                 break;
             default:
@@ -536,14 +571,11 @@ void CLatentEffectContainer::CheckLatentsJobLevel()
 void CLatentEffectContainer::CheckLatentsPetType()
 {
     ProcessLatentEffects([this](CLatentEffect& latentEffect) {
-        switch (latentEffect.GetConditionsID())
+        if (latentEffect.GetConditionsID() == LATENT::PET_ID)
         {
-            case LATENT::PET_ID:
-                return ProcessLatentEffect(latentEffect);
-                break;
-            default:
-                break;
+            return ProcessLatentEffect(latentEffect);
         }
+
         return false;
     });
 }
@@ -590,8 +622,10 @@ void CLatentEffectContainer::CheckLatentsZone()
             case LATENT::ZONE:
             case LATENT::IN_ASSAULT:
             case LATENT::IN_DYNAMIS:
+            case LATENT::WEATHER_CONDITION:
             case LATENT::WEATHER_ELEMENT:
             case LATENT::NATION_CONTROL:
+            case LATENT::NATION_CITIZEN:
             case LATENT::ZONE_HOME_NATION:
                 return ProcessLatentEffect(latentEffect);
                 break;
@@ -609,7 +643,16 @@ void CLatentEffectContainer::CheckLatentsZone()
  ************************************************************************/
 void CLatentEffectContainer::CheckLatentsWeather()
 {
-    CheckLatentsWeather(zoneutils::GetZone(m_POwner->getZone())->GetWeather());
+    uint16 zoneId = m_POwner->getZone();
+    CZone* PZone  = zoneutils::GetZone(zoneId);
+
+    if (PZone == nullptr)
+    {
+        ShowWarning("PZone was null for Zone ID %d.", zoneId);
+        return;
+    }
+
+    CheckLatentsWeather(PZone->GetWeather());
 }
 
 void CLatentEffectContainer::CheckLatentsWeather(uint16 weather)
@@ -618,6 +661,11 @@ void CLatentEffectContainer::CheckLatentsWeather(uint16 weather)
         if (latent.GetConditionsID() == LATENT::WEATHER_ELEMENT)
         {
             auto element = zoneutils::GetWeatherElement(battleutils::GetWeather((CBattleEntity*)m_POwner, false, weather));
+            return ApplyLatentEffect(latent, latent.GetConditionsValue() == element);
+        }
+        else if (latent.GetConditionsID() == LATENT::WEATHER_CONDITION)
+        {
+            auto element = battleutils::GetWeather((CBattleEntity*)m_POwner, false, weather);
             return ApplyLatentEffect(latent, latent.GetConditionsValue() == element);
         }
         return false;
@@ -664,12 +712,24 @@ void CLatentEffectContainer::ProcessLatentEffects(const std::function<bool(CLate
 
 // Processes a single CLatentEffect* and finds the expression to evaluate for
 // activation/deactivation and attempts to apply
-bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
+bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bool isDuringWs)
 {
     TracyZoneScoped;
     // Our default case un-finds our latent prevent us from toggling a latent we don't have programmed
     auto expression  = false;
     auto latentFound = true;
+
+    if (m_POwner == nullptr)
+    {
+        return false;
+    }
+
+    // this gets the current zone ID or destination zone ID if zoning
+    uint16 playerZoneID = m_POwner->getZone();
+    if (playerZoneID == 0)
+    {
+        return false;
+    }
 
     // find the latent type from the enum and find the expression to tests againts
     switch (latentEffect.GetConditionsID())
@@ -714,25 +774,33 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
         case LATENT::SIGNET_BONUS:
         {
             CBattleEntity* PTarget = m_POwner->GetBattleTarget();
-            expression =
-                PTarget != nullptr && m_POwner->GetMLevel() >= PTarget->GetMLevel() && m_POwner->loc.zone->GetRegionID() < REGION_TYPE::WEST_AHT_URHGAN;
+            expression = PTarget != nullptr &&
+                         m_POwner->GetMLevel() >= PTarget->GetMLevel() &&
+                         m_POwner->loc.zone != nullptr &&
+                         m_POwner->loc.zone->GetRegionID() < REGION_TYPE::WEST_AHT_URHGAN;
             break;
         }
         case LATENT::SANCTION_REGEN_BONUS:
-            expression = m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::WEST_AHT_URHGAN && m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::ALZADAAL &&
+            expression = m_POwner->loc.zone != nullptr &&
+                         m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::WEST_AHT_URHGAN &&
+                         m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::ALZADAAL &&
                          ((float)m_POwner->health.hp / m_POwner->health.maxhp) * 100 < latentEffect.GetConditionsValue();
             break;
         case LATENT::SANCTION_REFRESH_BONUS:
-            expression = m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::WEST_AHT_URHGAN && m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::ALZADAAL &&
+            expression = m_POwner->loc.zone != nullptr &&
+                         m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::WEST_AHT_URHGAN &&
+                         m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::ALZADAAL &&
                          ((float)m_POwner->health.mp / m_POwner->health.maxmp) * 100 < latentEffect.GetConditionsValue();
             break;
         case LATENT::SIGIL_REGEN_BONUS:
-            expression = m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::RONFAURE_FRONT &&
+            expression = m_POwner->loc.zone != nullptr &&
+                         m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::RONFAURE_FRONT &&
                          m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::VALDEAUNIA_FRONT &&
                          ((float)m_POwner->health.hp / m_POwner->health.maxhp) * 100 < latentEffect.GetConditionsValue();
             break;
         case LATENT::SIGIL_REFRESH_BONUS:
-            expression = m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::RONFAURE_FRONT &&
+            expression = m_POwner->loc.zone != nullptr &&
+                         m_POwner->loc.zone->GetRegionID() >= REGION_TYPE::RONFAURE_FRONT &&
                          m_POwner->loc.zone->GetRegionID() <= REGION_TYPE::VALDEAUNIA_FRONT &&
                          ((float)m_POwner->health.mp / m_POwner->health.maxmp) * 100 < latentEffect.GetConditionsValue();
             break;
@@ -743,12 +811,23 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
             expression = !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_FOOD);
             break;
         case LATENT::PARTY_MEMBERS:
-            expression = m_POwner->PParty != nullptr && latentEffect.GetConditionsValue() <= m_POwner->PParty->members.size();
+        {
+            size_t partyCount = 0;
+            size_t trustCount = 0;
+            auto* PLeader = m_POwner->PParty != nullptr ? dynamic_cast<CCharEntity*>(m_POwner->PParty->GetLeader()) : nullptr;
+            if (PLeader)
+            {
+                trustCount = PLeader->PTrusts.size();
+                partyCount = m_POwner->PParty->members.size();
+            }
+
+            expression = latentEffect.GetConditionsValue() <= (partyCount + trustCount);
             break;
+        }
         case LATENT::PARTY_MEMBERS_IN_ZONE:
         {
             auto inZone = 0;
-            if (m_POwner->PParty != nullptr)
+            if (m_POwner->PParty && dynamic_cast<CCharEntity*>(m_POwner->PParty->GetLeader()))
             {
                 for (auto* member : m_POwner->PParty->members)
                 {
@@ -757,7 +836,14 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
                         ++inZone;
                     }
                 }
+
+                auto PLeader = (CCharEntity*)m_POwner->PParty->GetLeader();
+                if (m_POwner->getZone() == PLeader->getZone())
+                {
+                    inZone = inZone + static_cast<int>(PLeader->PTrusts.size());
+                }
             }
+
             expression = latentEffect.GetConditionsValue() <= inZone;
             break;
         }
@@ -769,7 +855,10 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
                     if (member->PPet != nullptr)
                     {
                         auto* PPet = (CPetEntity*)member->PPet;
-                        if (PPet->m_PetID == latentEffect.GetConditionsValue() && PPet->PAI->IsSpawned())
+                        if (
+                                !PPet->isDead() && PPet->m_PetID < 21 && // is a live avatar
+                                (PPet->m_PetID == latentEffect.GetConditionsValue() || latentEffect.GetConditionsValue() == 21)
+                            )
                         {
                             expression = true;
                             break;
@@ -780,7 +869,10 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
             else if (m_POwner->PParty == nullptr && m_POwner->PPet != nullptr)
             {
                 auto* PPet = (CPetEntity*)m_POwner->PPet;
-                if (PPet->m_PetID == latentEffect.GetConditionsValue() && !PPet->isDead())
+                if (
+                        !PPet->isDead() && PPet->m_PetID < 21 && // is a live avatar
+                        (PPet->m_PetID == latentEffect.GetConditionsValue() || latentEffect.GetConditionsValue() == 21)
+                    )
                 {
                     expression = true;
                 }
@@ -799,13 +891,22 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
                             break;
                         }
                     }
-                    for (auto* trust : static_cast<CCharEntity*>(member)->PTrusts)
+                }
+
+                auto leader = (CCharEntity*)m_POwner->PParty->GetLeader();
+
+                if (leader == nullptr)
+                {
+                    expression = false;
+                    break;
+                }
+
+                for (auto* trust : leader->PTrusts)
+                {
+                    if (trust->GetMJob() == latentEffect.GetConditionsValue())
                     {
-                        if (trust->GetMJob() == latentEffect.GetConditionsValue())
-                        {
-                            expression = true;
-                            break;
-                        }
+                        expression = true;
+                        break;
                     }
                 }
             }
@@ -814,8 +915,19 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
             expression = latentEffect.GetConditionsValue() == m_POwner->getZone();
             break;
         case LATENT::SYNTH_TRAINEE:
-            // todo: figure this out
+        {
+            expression = (uint16)m_POwner->RealSkills.skill[latentEffect.GetConditionsValue()] / 10 < 40 &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_FISHING_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_WOODWORKING_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SMITHING_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_GOLDSMITHING_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_CLOTHCRAFT_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_LEATHERCRAFT_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_BONECRAFT_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_ALCHEMY_IMAGERY) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_COOKING_IMAGERY);
             break;
+        }
         case LATENT::SONG_ROLL_ACTIVE:
             expression = m_POwner->StatusEffectContainer->HasStatusEffectByFlag(EFFECTFLAG_ROLL | EFFECTFLAG_SONG);
             break;
@@ -1043,58 +1155,56 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
         case LATENT::JOB_LEVEL_ABOVE:
             expression = m_POwner->GetMLevel() >= latentEffect.GetConditionsValue();
             break;
+        case LATENT::WEATHER_CONDITION:
+            expression = latentEffect.GetConditionsValue() == battleutils::GetWeather((CBattleEntity*)m_POwner, false);
+            break;
         case LATENT::WEATHER_ELEMENT:
             expression = latentEffect.GetConditionsValue() == zoneutils::GetWeatherElement(battleutils::GetWeather((CBattleEntity*)m_POwner, false));
             break;
         case LATENT::NATION_CONTROL:
         {
-            // player is logging in/zoning
-            if (m_POwner->loc.zone == nullptr)
-            {
-                break;
-            }
-
-            auto region      = m_POwner->loc.zone->GetRegionID();
-            auto hasSignet   = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGNET);
-            auto hasSanction = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SANCTION);
-            auto hasSigil    = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGIL);
-
+            // playerZoneId represents the player's destination if they're zoning.
+            // Otherwise, it represents their current zone.
+            auto region                   = zoneutils::GetCurrentRegion(playerZoneID);
+            auto hasSignet                = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGNET);
+            auto hasSanction              = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SANCTION);
+            auto hasSigil                 = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGIL);
+            auto regionAlwaysOutOfControl = zoneutils::IsAlwaysOutOfNationControl(region);
             switch (latentEffect.GetConditionsValue())
             {
                 case 0:
                     // under own nation's control
-                    expression = region < REGION_TYPE::WEST_AHT_URHGAN && conquest::GetRegionOwner(region) == m_POwner->profile.nation &&
+                    expression = region < REGION_TYPE::WEST_AHT_URHGAN && (conquest::GetRegionOwner(region) == m_POwner->profile.nation) &&
                                  (hasSignet || hasSanction || hasSigil);
                     break;
                 case 1:
                     // outside of own nation's control
-                    expression = region < REGION_TYPE::WEST_AHT_URHGAN && m_POwner->profile.nation != conquest::GetRegionOwner(region) &&
+                    expression = region < REGION_TYPE::WEST_AHT_URHGAN && (regionAlwaysOutOfControl || m_POwner->profile.nation != conquest::GetRegionOwner(region)) &&
                                  (hasSignet || hasSanction || hasSigil);
                     break;
             }
             break;
         }
+        case LATENT::NATION_CITIZEN:
+        {
+            expression = m_POwner->profile.nation == latentEffect.GetConditionsValue();
+            break;
+        }
         case LATENT::ZONE_HOME_NATION:
         {
-            // player is logging in/zoning
-            if (m_POwner->loc.zone == nullptr)
-            {
-                break;
-            }
+            auto  nationRegion = static_cast<REGION_TYPE>(latentEffect.GetConditionsValue());
+            auto  region       = zoneutils::GetCurrentRegion(playerZoneID);
 
-            auto* PZone  = m_POwner->loc.zone;
-            auto  region = static_cast<REGION_TYPE>(latentEffect.GetConditionsValue());
-
-            switch (region)
+            switch (nationRegion)
             {
                 case REGION_TYPE::SANDORIA:
-                    expression = m_POwner->profile.nation == 0 && PZone->GetRegionID() == region;
+                    expression = m_POwner->profile.nation == 0 && region == nationRegion;
                     break;
                 case REGION_TYPE::BASTOK:
-                    expression = m_POwner->profile.nation == 1 && PZone->GetRegionID() == region;
+                    expression = m_POwner->profile.nation == 1 && region == nationRegion;
                     break;
                 case REGION_TYPE::WINDURST:
-                    expression = m_POwner->profile.nation == 2 && PZone->GetRegionID() == region;
+                    expression = m_POwner->profile.nation == 2 && region == nationRegion;
                     break;
                 default:
                     break;
@@ -1136,8 +1246,14 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
                 }
             }
             break;
+        case LATENT::MAINJOB:
+            expression = m_POwner->GetMJob() == latentEffect.GetConditionsValue();
+            break;
         case LATENT::EQUIPPED_IN_SLOT:
             expression = latentEffect.GetSlot() == latentEffect.GetConditionsValue();
+            break;
+        case LATENT::DURING_WS:
+            expression = isDuringWs;
             break;
         default:
             latentFound = false;

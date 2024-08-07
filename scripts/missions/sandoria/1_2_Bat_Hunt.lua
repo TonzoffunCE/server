@@ -12,13 +12,6 @@
 -- Orcish Scale Mail : ItemID 1112
 -- Bat Fang          : ItemID 891
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.BAT_HUNT)
 
@@ -38,12 +31,12 @@ local function handleTradeEvent(player, trade, firstId, repeatId)
 
     if
         not isRepeated and
-        npcUtil.tradeHasExactly(trade, xi.items.ORCISH_MAIL_SCALES)
+        npcUtil.tradeHasExactly(trade, xi.item.ORCISH_MAIL_SCALES)
     then
         return mission:progressEvent(firstId)
     elseif
         isRepeated and
-        npcUtil.tradeHasExactly(trade, xi.items.BAT_FANG)
+        npcUtil.tradeHasExactly(trade, xi.item.BAT_FANG)
     then
         return mission:progressEvent(repeatId)
     end
@@ -101,15 +94,10 @@ mission.sections =
 
         [xi.zone.KING_RANPERRES_TOMB] =
         {
-            ['Tombstone'] =
+            ['Tombstone_Upper'] =
             {
                 onTrigger = function(player, npc)
-                    local xPos = npc:getXPos()
-                    local zPos = npc:getZPos()
-
-                    if xPos >= -1 and xPos <= 1 and zPos >= -106 and zPos <= -102 then
-                        return mission:progressEvent(4)
-                    end
+                    return mission:progressEvent(4)
                 end,
             },
 

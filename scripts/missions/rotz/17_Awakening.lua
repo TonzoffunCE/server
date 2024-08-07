@@ -7,13 +7,6 @@
 -- Lower Jeuno : !zone 245
 -- Norg        : !zone 252
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/utils')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.ZILART, xi.mission.id.zilart.AWAKENING)
 
@@ -21,6 +14,16 @@ mission.reward =
 {
     nextMission = { xi.mission.log_id.ZILART, xi.mission.id.zilart.THE_LAST_VERSE },
 }
+
+local missionOnEventFinish = function(player, csid, option, npc)
+    if
+        option >= 1 and
+        option <= 4 and
+        player:getMissionStatus(mission.areaId) == 3
+    then
+        mission:complete(player)
+    end
+end
 
 mission.sections =
 {
@@ -36,12 +39,10 @@ mission.sections =
     },
 
     -- Optional cutscenes that should be displayed only once onZone.  In this
-    -- case, missionStatus is handled as a bitfield, and missionStatus < 3 isn't
-    -- really required.
-    -- TODO: Remove this and refactor.
+    -- case, missionStatus is handled as a bitfield.
     {
         check = function(player, currentMission, missionStatus, vars)
-            return currentMission == mission.missionId and missionStatus < 3
+            return currentMission == mission.missionId
         end,
 
         [xi.zone.LOWER_JEUNO] =
@@ -81,6 +82,9 @@ mission.sections =
                     -- Set bit 0 of missionStatus
                     player:setMissionStatus(mission.areaId, player:getMissionStatus(mission.areaId) + 1)
                 end,
+
+                [232] = missionOnEventFinish,
+                [234] = missionOnEventFinish,
             },
         }
     },

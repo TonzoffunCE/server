@@ -7,13 +7,6 @@
 -- Shattered Telepoint (La Theine) : !pos 334 19 -60 102
 -- Shattered Telepoint (Tahrongi)  : !pos 179 35 255 117
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require("scripts/globals/teleports")
-require('scripts/globals/utils')
-require('scripts/globals/zone')
 require('scripts/missions/cop/helpers')
 -----------------------------------
 
@@ -150,7 +143,7 @@ mission.sections =
                 [155] = function(player, csid, option, npc)
                     -- This event only happens once since there is no sealing component.
                     mission:setVar(player, 'Status', 1)
-                    xi.cop.helpers.sendToPromyvionZone(player:getLocaLVar('toPromyvion'))
+                    xi.cop.helpers.sendToPromyvionZone(player:getLocalVar('toPromyvion'))
                 end,
             },
         },

@@ -3,11 +3,6 @@
 --  NPC: Meret
 -- !pos 83.166 -25.082 4.633 26
 -----------------------------------
-require("scripts/globals/keyitems")
-require("scripts/globals/missions")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
------------------------------------
 local entity = {}
 
 -- [tradedItemId] = rewardItemId
@@ -36,10 +31,10 @@ local trades =
 }
 
 entity.onTrade = function(player, npc, trade)
-    if player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.IN_THE_NAME_OF_SCIENCE) == QUEST_COMPLETED then
+    if player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.IN_THE_NAME_OF_SCIENCE) == xi.questStatus.QUEST_COMPLETED then
         for k, v in pairs(trades) do
             if npcUtil.tradeHasExactly(trade, k) then
-                player:setLocalVar("meretReward", v)
+                player:setLocalVar('meretReward', v)
                 player:startEvent(586, k, v)
                 break
             end
@@ -49,7 +44,7 @@ end
 
 entity.onTrigger = function(player, npc)
     if player:getCurrentMission(xi.mission.log_id.COP) > xi.mission.id.cop.THE_WARRIORS_PATH then
-        if player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.IN_THE_NAME_OF_SCIENCE) == QUEST_COMPLETED then
+        if player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.IN_THE_NAME_OF_SCIENCE) == xi.questStatus.QUEST_COMPLETED then
             if math.random() < 0.5 then
                 player:startEvent(582)
             else
@@ -61,12 +56,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
-    if csid == 586 and option == player:getLocalVar("meretReward") then
-        player:setLocalVar("meretReward", 0)
+entity.onEventFinish = function(player, csid, option, npc)
+    if csid == 586 and option == player:getLocalVar('meretReward') then
+        player:setLocalVar('meretReward', 0)
 
         if npcUtil.giveItem(player, option) then
             player:confirmTrade()

@@ -18,14 +18,17 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
+
 #pragma once
 
 #include "common/logging.h"
+
 #include "map/zone.h"
 
 #include <mutex>
 
 #include <httplib.h>
+#include <task_system.hpp>
 
 class HTTPServer
 {
@@ -40,9 +43,11 @@ private:
     std::mutex              m_updateBottleneck;
     std::atomic<time_point> m_lastUpdate;
 
+    std::unique_ptr<ts::task_system> ts;
+
     struct APIDataCache
     {
         uint32                                 activeSessionCount;
         std::array<uint32, ZONEID::MAX_ZONEID> zonePlayerCounts;
-    } m_apiDataCache;
+    } m_apiDataCache{};
 };

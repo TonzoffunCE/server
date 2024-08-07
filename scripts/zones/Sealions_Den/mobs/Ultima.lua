@@ -2,9 +2,6 @@
 -- Area: Sealions Den
 --   NM: Ultima
 -----------------------------------
-local oneToBeFeared = require("scripts/zones/Sealions_Den/bcnms/one_to_be_feared_helper")
-require("scripts/globals/mobs")
------------------------------------
 local entity = {}
 
 local abilities = { 1259, 1260, 1269, 1270 }
@@ -20,7 +17,7 @@ entity.onMobSpawn = function(mob)
 end
 
 entity.onMobWeaponSkillPrepare = function(mob, target)
-    local stage = mob:getLocalVar("stage")
+    local stage = mob:getLocalVar('stage')
     if stage == 0 then
         local checker = math.random()
         if checker < 0.50 then
@@ -32,16 +29,16 @@ entity.onMobWeaponSkillPrepare = function(mob, target)
         end
     elseif stage == 3 then
         -- does a specific order of moves in final phase
-        local order = mob:getLocalVar("order")
+        local order = mob:getLocalVar('order')
 
         if order == 0 then
-            mob:setLocalVar("order", 1)
+            mob:setLocalVar('order', 1)
             return abilities[4]
         elseif order == 1 then
-            mob:setLocalVar("order", 2)
+            mob:setLocalVar('order', 2)
             return abilities[2]
         else
-            mob:setLocalVar("order", 0)
+            mob:setLocalVar('order', 0)
             return abilities[2]
         end
     end
@@ -58,16 +55,16 @@ entity.onMobWeaponSkill = function(target, mob, skill)
 end
 
 entity.onMobFight = function(mob, target)
-    local stage = mob:getLocalVar("stage")
+    local stage = mob:getLocalVar('stage')
     local hpp = mob:getHPP()
     if stage == 0 and hpp < 70 then
-        mob:setLocalVar("stage", 1)
+        mob:setLocalVar('stage', 1)
         mob:setMobMod(xi.mobMod.SKILL_LIST, 1190)
     elseif stage == 1 and hpp < 40 then
-        mob:setLocalVar("stage", 2)
+        mob:setLocalVar('stage', 2)
         mob:setMobMod(xi.mobMod.SKILL_LIST, 1191)
     elseif stage == 2 and hpp < 20 then
-        mob:setLocalVar("stage", 3)
+        mob:setLocalVar('stage', 3)
         mob:setMobMod(xi.mobMod.SKILL_LIST, 1192)
         mob:setMod(xi.mod.REGAIN, 100)
     end
@@ -78,7 +75,6 @@ entity.onAdditionalEffect = function(mob, target, damage)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
-    oneToBeFeared.handleUltimaDeath(mob, player, optParams)
 end
 
 return entity

@@ -2,14 +2,11 @@
 -- Area: Dynamis - Xarcabard
 --  Mob: Animated Spear
 -----------------------------------
-local ID = require("scripts/zones/Dynamis-Xarcabard/IDs")
-require("scripts/globals/status")
-mixins = { require("scripts/mixins/animated_weapon") }
-mixinOptions = { item = xi.items.STELLAR_FRAGMENT }
+local ID = zones[xi.zone.DYNAMIS_XARCABARD]
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     target:showText(mob, ID.text.ANIMATED_SPEAR_DIALOG)
 end
 
@@ -23,6 +20,7 @@ end
 
 entity.onMobDeath = function(mob, player, optParams)
     player:showText(mob, ID.text.ANIMATED_SPEAR_DIALOG + 1)
+    xi.magian.onMobDeath(mob, player, optParams, set{ 3111 })
 end
 
 return entity

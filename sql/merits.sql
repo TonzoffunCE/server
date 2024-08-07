@@ -12,7 +12,7 @@ CREATE TABLE `merits` (
   `upgradeid` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `catagoryid` tinyint(2) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`meritid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+) ENGINE=Aria TRANSACTIONAL=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `merits`
@@ -21,7 +21,7 @@ CREATE TABLE `merits` (
 
 INSERT INTO `merits` VALUES (64,'max_hp',15,10,1048575,0,0);
 INSERT INTO `merits` VALUES (66,'max_mp',15,10,1048575,0,0);
-INSERT INTO `merits` VALUES (68,'max_merits',15,1,1048575,9,0);
+INSERT INTO `merits` VALUES (68,'max_merits',45,1,1048575,9,0);
 INSERT INTO `merits` VALUES (128,'str',15,1,1048575,1,1);
 INSERT INTO `merits` VALUES (130,'dex',15,1,1048575,1,1);
 INSERT INTO `merits` VALUES (132,'vit',15,1,1048575,1,1);
@@ -166,25 +166,25 @@ INSERT INTO `merits` VALUES (1480,'repair_recast',5,6,131072,6,22);
 INSERT INTO `merits` VALUES (1536,'step_accuracy',5,3,262144,6,23);
 INSERT INTO `merits` VALUES (1538,'haste_samba_effect',5,100,262144,6,23);
 INSERT INTO `merits` VALUES (1540,'reverse_flourish_effect',5,3,262144,6,23);
-INSERT INTO `merits` VALUES (1542,'building_flourish_effect',5,2,262144,6,23);
+INSERT INTO `merits` VALUES (1542,'building_flourish_effect',5,1,262144,6,23);
 INSERT INTO `merits` VALUES (1600,'grimoire_recast',5,2,524288,6,24);
 INSERT INTO `merits` VALUES (1602,'modus_veritas_duration',5,1,524288,6,24);
 INSERT INTO `merits` VALUES (1604,'helix_magic_acc_att',5,1,524288,6,24);
 INSERT INTO `merits` VALUES (1606,'max_sublimation',5,10,524288,6,24);
-INSERT INTO `merits` VALUES (1664,'shijin_spiral',1,3,131074,8,25);
-INSERT INTO `merits` VALUES (1666,'exenterator',1,3,333617,8,25);
-INSERT INTO `merits` VALUES (1668,'requiescat',1,3,113361,8,25);
-INSERT INTO `merits` VALUES (1670,'resolution',1,3,193,8,25);
-INSERT INTO `merits` VALUES (1672,'ruinator',1,3,1409,8,25);
-INSERT INTO `merits` VALUES (1674,'upheaval',1,3,129,8,25);
-INSERT INTO `merits` VALUES (1676,'entropy',1,3,385,8,25);
-INSERT INTO `merits` VALUES (1678,'stardiver',1,3,10241,8,25);
-INSERT INTO `merits` VALUES (1680,'blade_shun',1,3,4096,8,25);
-INSERT INTO `merits` VALUES (1682,'tachi_shoha',1,3,2048,8,25);
-INSERT INTO `merits` VALUES (1684,'realmrazor',1,3,573519,8,25);
-INSERT INTO `merits` VALUES (1686,'shattersoul',1,3,549455,8,25);
-INSERT INTO `merits` VALUES (1688,'apex_arrow',1,3,3072,8,25);
-INSERT INTO `merits` VALUES (1690,'last_stand',1,3,66592,8,25);
+INSERT INTO `merits` VALUES (1664,'shijin_spiral',5,3,131074,8,25);
+INSERT INTO `merits` VALUES (1666,'exenterator',5,3,333617,8,25);
+INSERT INTO `merits` VALUES (1668,'requiescat',5,3,113361,8,25);
+INSERT INTO `merits` VALUES (1670,'resolution',5,3,193,8,25);
+INSERT INTO `merits` VALUES (1672,'ruinator',5,3,1409,8,25);
+INSERT INTO `merits` VALUES (1674,'upheaval',5,3,129,8,25);
+INSERT INTO `merits` VALUES (1676,'entropy',5,3,385,8,25);
+INSERT INTO `merits` VALUES (1678,'stardiver',5,3,10241,8,25);
+INSERT INTO `merits` VALUES (1680,'blade_shun',5,3,4096,8,25);
+INSERT INTO `merits` VALUES (1682,'tachi_shoha',5,3,2048,8,25);
+INSERT INTO `merits` VALUES (1684,'realmrazor',5,3,573519,8,25);
+INSERT INTO `merits` VALUES (1686,'shattersoul',5,3,549455,8,25);
+INSERT INTO `merits` VALUES (1688,'apex_arrow',5,3,3072,8,25);
+INSERT INTO `merits` VALUES (1690,'last_stand',5,3,66592,8,25);
 INSERT INTO `merits` VALUES (1728,'full_circle_effect',5,1,1048576,6,26);
 INSERT INTO `merits` VALUES (1730,'ecliptic_attrition_recast',5,10,1048576,6,26);
 INSERT INTO `merits` VALUES (1732,'life_cycle_recast',5,20,1048576,6,26);
@@ -242,7 +242,7 @@ INSERT INTO `merits` VALUES (2434,'chivalry',5,5,64,7,37);
 INSERT INTO `merits` VALUES (2436,'iron_will',5,19,64,7,37);
 INSERT INTO `merits` VALUES (2438,'guardian',5,19,64,7,37);
 INSERT INTO `merits` VALUES (2496,'dark_seal',5,10,128,7,38);
-INSERT INTO `merits` VALUES (2498,'diabolic_eye',5,5,128,7,38);
+INSERT INTO `merits` VALUES (2498,'diabolic_eye',5,1,128,7,38);
 INSERT INTO `merits` VALUES (2500,'muted_soul',5,10,128,7,38);
 INSERT INTO `merits` VALUES (2502,'desperate_blows_effect',5,200,128,7,38);
 INSERT INTO `merits` VALUES (2560,'feral_howl',5,5,256,7,39);
@@ -279,12 +279,12 @@ INSERT INTO `merits` VALUES (2880,'deep_breathing',5,1,8192,7,44);
 INSERT INTO `merits` VALUES (2882,'angon',5,15,8192,7,44);
 INSERT INTO `merits` VALUES (2884,'empathy',5,1,8192,7,44);
 INSERT INTO `merits` VALUES (2886,'strafe_effect',5,10,8192,7,44);
-INSERT INTO `merits` VALUES (2944,'meteor_strike',5,40,16384,7,45);
-INSERT INTO `merits` VALUES (2946,'heavenly_strike',5,40,16384,7,45);
-INSERT INTO `merits` VALUES (2948,'wind_blade',5,40,16384,7,45);
-INSERT INTO `merits` VALUES (2950,'geocrush',5,40,16384,7,45);
-INSERT INTO `merits` VALUES (2952,'thunderstorm',5,40,16384,7,45);
-INSERT INTO `merits` VALUES (2954,'grandfall',5,40,16384,7,45);
+INSERT INTO `merits` VALUES (2944,'meteor_strike',5,400,16384,7,45);
+INSERT INTO `merits` VALUES (2946,'heavenly_strike',5,400,16384,7,45);
+INSERT INTO `merits` VALUES (2948,'wind_blade',5,400,16384,7,45);
+INSERT INTO `merits` VALUES (2950,'geocrush',5,400,16384,7,45);
+INSERT INTO `merits` VALUES (2952,'thunderstorm',5,400,16384,7,45);
+INSERT INTO `merits` VALUES (2954,'grandfall',5,400,16384,7,45);
 INSERT INTO `merits` VALUES (3008,'convergence',5,5,32768,7,46);
 INSERT INTO `merits` VALUES (3010,'diffusion',5,5,32768,7,46);
 INSERT INTO `merits` VALUES (3012,'enchainment',5,100,32768,7,46);

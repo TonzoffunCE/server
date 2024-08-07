@@ -10,15 +10,8 @@
 -- Arnau      : !pos 148 0 139 231
 -- Hut_Door   : !pos -165.357 -11.672 77.771 140
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
-local southernSandoriaID = require('scripts/zones/Southern_San_dOria/IDs')
-local northernSandoriaID = require('scripts/zones/Northern_San_dOria/IDs')
+local southernSandoriaID = zones[xi.zone.SOUTHERN_SAN_DORIA]
+local northernSandoriaID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.SAVE_THE_CHILDREN)
@@ -156,7 +149,7 @@ mission.sections =
             onEventFinish =
             {
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 32 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.SAVE_THE_CHILDREN then
                         npcUtil.giveKeyItem(player, xi.ki.ORCISH_HUT_KEY)
                         player:setTitle(xi.title.FODDERCHIEF_FLAYER)
                         player:setMissionStatus(mission.areaId, 3)

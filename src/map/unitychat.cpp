@@ -14,7 +14,7 @@
 ===========================================================================
 */
 
-#include "../common/utils.h"
+#include "common/utils.h"
 
 #include <cstring>
 
@@ -36,9 +36,9 @@ uint32 CUnityChat::getLeader() const
 
 void CUnityChat::AddMember(CCharEntity* PChar)
 {
-    sql->Query("UPDATE accounts_sessions SET unitychat = %u WHERE charid = %u", this->getLeader(), PChar->id);
+    _sql->Query("UPDATE accounts_sessions SET unitychat = %u WHERE charid = %u", this->getLeader(), PChar->id);
     PChar->PUnityChat = this;
-    members.push_back(PChar);
+    members.emplace_back(PChar);
 }
 
 bool CUnityChat::DelMember(CCharEntity* PChar)
@@ -47,7 +47,7 @@ bool CUnityChat::DelMember(CCharEntity* PChar)
     {
         if (members.at(i) == PChar)
         {
-            sql->Query("UPDATE accounts_sessions SET unitychat = 0 WHERE charid = %u", PChar->id);
+            _sql->Query("UPDATE accounts_sessions SET unitychat = 0 WHERE charid = %u", PChar->id);
             PChar->PUnityChat = nullptr;
             members.erase(members.begin() + i);
             break;
@@ -90,7 +90,12 @@ namespace unitychat
 
     bool AddOnlineMember(CCharEntity* PChar, uint32 leader)
     {
-        XI_DEBUG_BREAK_IF(PChar == nullptr);
+        if (PChar == nullptr)
+        {
+            ShowWarning("PChar is null.");
+            return false;
+        }
+
         CUnityChat* PUnity = nullptr;
         if (auto UnityChatListUnity = UnityChatList.find(leader); UnityChatListUnity != UnityChatList.end())
         {
@@ -109,7 +114,12 @@ namespace unitychat
 
     bool DelOnlineMember(CCharEntity* PChar, uint32 leader)
     {
-        XI_DEBUG_BREAK_IF(PChar == nullptr);
+        if (PChar == nullptr)
+        {
+            ShowWarning("PChar is null.");
+            return false;
+        }
+
         try
         {
             CUnityChat* PUnityChat = UnityChatList.at(leader).get();

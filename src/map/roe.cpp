@@ -18,14 +18,18 @@
 
 ===========================================================================
 */
+
+#include "roe.h"
+
+#include "common/vana_time.h"
+
 #include <ctime>
 
+#include "common/vana_time.h"
 #include "lua/luautils.h"
 #include "packets/chat_message.h"
-#include "roe.h"
 #include "utils/charutils.h"
 #include "utils/zoneutils.h"
-#include "vana_time.h"
 
 #include "packets/char_spells.h"
 #include "packets/roe_questlog.h"
@@ -93,14 +97,6 @@ void call_onRecordTrigger(CCharEntity* PChar, uint16 recordID, const RoeDatagram
 
 namespace roeutils
 {
-    void init()
-    {
-        TracyZoneScoped;
-        lua["RoeParseRecords"] = &roeutils::ParseRecords;
-        lua["RoeParseTimed"]   = &roeutils::ParseTimedSchedule;
-        RoeHandlers.fill(RoeCheckHandler());
-    }
-
     void ParseRecords(sol::table const& records_table)
     {
         TracyZoneScoped;
@@ -154,17 +150,17 @@ namespace roeutils
                     if (flag == "daily")
                     {
                         roeutils::RoeSystem.DailyRecords.set(recordID);
-                        roeutils::RoeSystem.DailyRecordIDs.push_back(recordID);
+                        roeutils::RoeSystem.DailyRecordIDs.emplace_back(recordID);
                     }
                     else if (flag == "weekly")
                     {
                         roeutils::RoeSystem.WeeklyRecords.set(recordID);
-                        roeutils::RoeSystem.WeeklyRecordIDs.push_back(recordID);
+                        roeutils::RoeSystem.WeeklyRecordIDs.emplace_back(recordID);
                     }
                     else if (flag == "unity")
                     {
                         roeutils::RoeSystem.UnityRecords.set(recordID);
-                        roeutils::RoeSystem.UnityRecordIDs.push_back(recordID);
+                        roeutils::RoeSystem.UnityRecordIDs.emplace_back(recordID);
                     }
                     else if (flag == "timed")
                     {
@@ -189,7 +185,6 @@ namespace roeutils
                 }
             }
         }
-        // ShowInfo("RoEUtils: %d record entries parsed & available.", RoeBitmaps.ImplementedRecords.count());
     }
 
     void ParseTimedSchedule(sol::table const& schedule_table)
@@ -202,7 +197,7 @@ namespace roeutils
         {
             uint8 day       = entry.first.as<uint8>() - 1;
             auto  timeslots = entry.second.as<sol::table>();
-            for (auto slot_entry : timeslots)
+            for (auto const& slot_entry : timeslots)
             {
                 auto   block    = slot_entry.first.as<uint16>() - 1;
                 uint16 recordID = slot_entry.second.as<uint16>();
@@ -690,8 +685,8 @@ namespace roeutils
             return;
         }
 
-        const char* rankingQuery = "UPDATE unity_system SET members_prev = members_current, points_prev = points_current, members_current = 0, points_current = 0;";
-        sql->Query(rankingQuery);
+        const char* rankingQuery = "UPDATE unity_system SET members_prev = members_current, points_prev = points_current, members_current = 0, points_current = 0";
+        _sql->Query(rankingQuery);
 
         roeutils::UpdateUnityRankings();
     }
@@ -705,21 +700,21 @@ namespace roeutils
             return;
         }
 
-        const char* memberQuery = "UPDATE unity_system JOIN (SELECT unity_leader, COUNT(*) AS members FROM char_profile GROUP BY unity_leader) TMP ON unity_system.leader = unity_leader SET unity_system.members_current = members;";
-        sql->Query(memberQuery);
+        const char* memberQuery = "UPDATE unity_system JOIN (SELECT unity_leader, COUNT(*) AS members FROM char_profile GROUP BY unity_leader) TMP ON unity_system.leader = unity_leader SET unity_system.members_current = members";
+        _sql->Query(memberQuery);
 
-        const char* unityQuery = "SELECT leader, CASE WHEN members_prev = 0 THEN 0 ELSE FLOOR(points_prev/members_prev) END AS eval FROM unity_system ORDER BY eval DESC;";
-        int32       ret        = sql->Query(unityQuery);
+        const char* unityQuery = "SELECT leader, CASE WHEN members_prev = 0 THEN 0 ELSE FLOOR(points_prev/members_prev) END AS eval FROM unity_system ORDER BY eval DESC";
+        int32       ret        = _sql->Query(unityQuery);
 
-        if (ret != SQL_ERROR && sql->NumRows() != 0)
+        if (ret != SQL_ERROR && _sql->NumRows() != 0)
         {
             uint8 currentRank = 1;
             uint8 rankGap     = 0;
             int32 prev_eval   = 0;
 
-            while (sql->NextRow() == SQL_SUCCESS)
+            while (_sql->NextRow() == SQL_SUCCESS)
             {
-                int32 new_eval = sql->GetIntData(1);
+                int32 new_eval = _sql->GetIntData(1);
 
                 if (new_eval < prev_eval)
                 {
@@ -733,7 +728,7 @@ namespace roeutils
 
                 prev_eval = new_eval;
 
-                roeutils::RoeSystem.unityLeaderRank[sql->GetIntData(0) - 1] = currentRank;
+                roeutils::RoeSystem.unityLeaderRank[_sql->GetIntData(0) - 1] = currentRank;
             }
         }
     }

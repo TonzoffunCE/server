@@ -9,12 +9,6 @@
 -- Zokima-Rokima     : !pos 0 -16 124 239
 -- Vestal Chamber    : !pos 0.1 -49 37 242
 -- Kaa Toru the Just : !pos -100.188 -62.125 145.422 151
-require('scripts/globals/interaction/mission')
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/zone')
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WINDURST, xi.mission.id.windurst.SAINTLY_INVITATION)
@@ -116,7 +110,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 1 and
-                        player:getLocalVar('battlefieldWin') == 99
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.SAINTLY_INVITATION
                     then
                         player:addTitle(xi.title.VICTOR_OF_THE_BALGA_CONTEST)
                         npcUtil.giveKeyItem(player, xi.ki.BALGA_CHAMPION_CERTIFICATE)
@@ -140,7 +134,7 @@ mission.sections =
             onEventFinish =
             {
                 [45] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.ASHURA_NECKLACE) then
+                    if npcUtil.giveItem(player, xi.item.ASHURA_NECKLACE) then
                         player:delKeyItem(xi.ki.HOLY_ONES_INVITATION)
                         npcUtil.giveKeyItem(player, xi.ki.HOLY_ONES_OATH)
                         player:setMissionStatus(mission.areaId, 3)

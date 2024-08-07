@@ -1,13 +1,7 @@
 -----------------------------------
 -- Zone: West_Sarutabaruta (115)
 -----------------------------------
-local ID = require('scripts/zones/West_Sarutabaruta/IDs')
 require('scripts/quests/i_can_hear_a_rainbow')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/missions')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
 -----------------------------------
 local zoneObject = {}
 
@@ -18,7 +12,7 @@ end
 zoneObject.onInitialize = function(zone)
     xi.conq.setRegionalConquestOverseers(zone:getRegionID())
 
-    xi.helm.initZone(zone, xi.helm.type.HARVESTING)
+    xi.helm.initZone(zone, xi.helmType.HARVESTING)
     xi.voidwalker.zoneOnInit(zone)
 end
 
@@ -30,7 +24,7 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        player:setPos(-374.008, -23.712, 63.289, 213)
+        player:setPos(320.018, -6.684, -45.166, 189)
     end
 
     if quests.rainbow.onZoneIn(player) then
@@ -50,8 +44,8 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
@@ -61,7 +55,7 @@ zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 48 then
         quests.rainbow.onEventUpdate(player)
     elseif csid == 62 or csid == 63 then
-        player:setCharVar("ASA_Status", option)
+        player:setCharVar('ASA_Status', option)
     end
 end
 

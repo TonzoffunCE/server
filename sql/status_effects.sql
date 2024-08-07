@@ -29,7 +29,7 @@ CREATE TABLE `status_effects` (
   `min_duration` smallint(5) unsigned NOT NULL DEFAULT 0,
   `sort_key` smallint(5) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+) ENGINE=Aria TRANSACTIONAL=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -147,7 +147,7 @@ INSERT INTO `status_effects` VALUES (109,'barblind',41,106,0,0,0,0,7,0,500);
 INSERT INTO `status_effects` VALUES (110,'barsilence',41,106,0,0,0,0,2,0,500);
 INSERT INTO `status_effects` VALUES (111,'barpetrify',41,106,0,0,0,0,3,0,500);
 INSERT INTO `status_effects` VALUES (112,'barvirus',41,106,0,0,0,0,6,0,500);
-INSERT INTO `status_effects` VALUES (113,'reraise',41,0,0,0,0,0,7,0,900);
+INSERT INTO `status_effects` VALUES (113,'reraise',4194344,0,0,0,0,0,7,0,900);
 INSERT INTO `status_effects` VALUES (114,'cover',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (115,'unlimited_shot',4194336,73,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (116,'phalanx',33,0,0,0,0,0,7,0,1050);
@@ -210,7 +210,7 @@ INSERT INTO `status_effects` VALUES (172,'intension',40,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (173,'dread_spikes',41,34,0,0,0,0,0,0,800);
 INSERT INTO `status_effects` VALUES (174,'magic_acc_down',16418,0,0,0,0,0,1,0,0);
 INSERT INTO `status_effects` VALUES (175,'magic_atk_down',16418,0,0,0,0,0,4,0,0);
-INSERT INTO `status_effects` VALUES (176,'quickening',4194476,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (176,'quickening',4194348,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (177,'encumbrance',8388608,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (178,'firestorm',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (179,'hailstorm',4194336,0,0,0,0,0,0,0,0);
@@ -316,7 +316,7 @@ INSERT INTO `status_effects` VALUES (283,'perfect_defense',4194336,0,0,0,0,0,0,0
 INSERT INTO `status_effects` VALUES (284,'egg',32,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (285,'visitant',41943296,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (286,'baramnesia',41,106,0,0,0,0,0,0,500);
-INSERT INTO `status_effects` VALUES (287,'atma',32,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (287,'atma',0,0,0,4,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (288,'endark',41,94,51,0,0,0,8,0,0);
 INSERT INTO `status_effects` VALUES (289,'enmity_boost',32,0,0,0,0,0,1,0,0);
 INSERT INTO `status_effects` VALUES (290,'subtle_blow_plus',32,0,0,0,0,0,0,0,0);
@@ -374,7 +374,7 @@ INSERT INTO `status_effects` VALUES (341,'formless_strikes',4194336,0,0,0,0,0,0,
 INSERT INTO `status_effects` VALUES (342,'assassins_charge',4194340,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (343,'feint',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (344,'fealty',4194337,0,0,0,0,0,0,0,0);
-INSERT INTO `status_effects` VALUES (345,'dark_seal',161,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (345,'dark_seal',33,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (346,'diabolic_eye',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (347,'nightingale',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (348,'troubadour',4194336,0,0,0,0,0,0,0,0);
@@ -387,7 +387,7 @@ INSERT INTO `status_effects` VALUES (354,'seigan',41,353,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (355,'convergence',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (356,'diffusion',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (357,'snake_eye',4194336,0,0,0,0,0,0,0,0);
-INSERT INTO `status_effects` VALUES (358,'light_arts',4194592,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (358,'light_arts',13631776,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (359,'dark_arts',4194592,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (360,'penury',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (361,'parsimony',4194336,0,0,0,0,0,0,0,0);
@@ -556,7 +556,7 @@ INSERT INTO `status_effects` VALUES (532,'swordplay',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (533,'pflug',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (534,'emboldened',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (535,'valiance',4194336,0,0,0,531,0,0,0,0);
-INSERT INTO `status_effects` VALUES (536,'gambit',8388642,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (536,'gambit',8388642,0,0,2,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (537,'liement',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (538,'one_for_all',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (539,'geo_regen',8388640,0,0,0,0,0,7,0,0);
@@ -591,7 +591,7 @@ INSERT INTO `status_effects` VALUES (567,'geo_weight',8388640,0,0,0,0,0,3,0,0);
 INSERT INTO `status_effects` VALUES (568,'foil',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (569,'blaze_of_glory',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (570,'battuta',5243168,0,0,0,0,0,0,0,0);
-INSERT INTO `status_effects` VALUES (571,'rayke',8388642,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (571,'rayke',8388642,0,0,2,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (572,'avoidance_down',32,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (573,'deluge_spikes',41,0,0,0,0,0,6,0,800);
 INSERT INTO `status_effects` VALUES (574,'fast_cast',32,0,0,0,0,0,0,0,0);
@@ -656,7 +656,6 @@ INSERT INTO `status_effects` VALUES (785,'prowess_macc_matk',768,0,0,0,0,0,0,0,0
 INSERT INTO `status_effects` VALUES (786,'prowess_cure_potency',768,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (787,'prowess_ws_dmg',768,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (788,'prowess_killer',768,0,0,0,0,0,0,0,0);
-INSERT INTO `status_effects` VALUES (789,'field_support_food',8421408,0,0,2,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (790,'mark_of_seed',768,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (791,'all_miss',32,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (792,'super_buff',32,0,0,0,0,0,0,0,0);

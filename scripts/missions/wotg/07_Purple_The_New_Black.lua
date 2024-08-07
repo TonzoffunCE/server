@@ -7,15 +7,6 @@
 -- !setmissionstatus <player> 1 5 0
 -- _2d1 (Reinforced Gateway) : !pos -114.386 -3.599 -179.804 85
 -----------------------------------
-require('scripts/globals/keyitems')
-require('scripts/globals/maws')
-require('scripts/globals/missions')
-require('scripts/globals/quests')
-require('scripts/globals/settings')
-require('scripts/globals/titles')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WOTG, xi.mission.id.wotg.PURPLE_THE_NEW_BLACK)
 
@@ -66,7 +57,7 @@ mission.sections =
             {
                 -- Completed BCNM
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 2721 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.PURPLE_THE_NEW_BLACK then
                         player:setMissionStatus(mission.areaId, 2)
                         player:setPos(-260.44, 0.134, -156.652, 192, xi.zone.LA_VAULE_S)
                     end

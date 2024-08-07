@@ -26,6 +26,7 @@
 
 #include "basic.h"
 
+// Extracted from client.
 enum CHAT_MESSAGE_TYPE
 {
     MESSAGE_SAY       = 0,
@@ -34,7 +35,7 @@ enum CHAT_MESSAGE_TYPE
     MESSAGE_TELL      = 3,
     MESSAGE_PARTY     = 4,
     MESSAGE_LINKSHELL = 5,
-    MESSAGE_SYSTEM_1  = 6, // Standard "PrintToPlayer" default if no type specified
+    MESSAGE_SYSTEM_1  = 6, // Standard "printToPlayer" default if no type specified
     MESSAGE_SYSTEM_2  = 7, // Login / world announcement messages
     MESSAGE_EMOTION   = 8,
     // 9 / 10 / 11 = Does not work / nothing
@@ -62,6 +63,18 @@ enum CHAT_MESSAGE_TYPE
     MESSAGE_UNITY         = 33,
     MESSAGE_JP_ASSIST     = 34,
     MESSAGE_NA_ASSIST     = 35,
+};
+
+// Made up, but if you edit this to change the order,
+// You will break things that expect this order.
+enum CHAT_MESSAGE_AREA
+{
+    MESSAGE_AREA_SYSTEM = 0, // All zones world wide
+    MESSAGE_AREA_SAY    = 1, // Say range
+    MESSAGE_AREA_SHOUT  = 2, // Shout
+    MESSAGE_AREA_PARTY  = 3, // Party and Alliance
+    MESSAGE_AREA_YELL   = 4, // Yell zones only
+    MESSAGE_AREA_UNITY  = 5, // Currently -all- unities
 };
 
 class CCharEntity;

@@ -1,17 +1,13 @@
 -----------------------------------
 -- Zone: Sealions_Den (32)
 -----------------------------------
-local ID = require('scripts/zones/Sealions_Den/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/quests')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -25,26 +21,16 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:setPos(600.101, 130.355, 797.612, 50)
     end
 
-    if
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.APOCALYPSE_NIGH) == QUEST_ACCEPTED and
-        player:getCharVar('ApocalypseNigh') == 1
-    then
-        cs = 29
-    end
-
     return cs
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
-    if csid == 29 then
-        player:setCharVar('ApocalypseNigh', 2)
-    end
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

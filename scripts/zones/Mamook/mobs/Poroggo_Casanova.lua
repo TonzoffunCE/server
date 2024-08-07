@@ -3,7 +3,8 @@
 -- Mob: Poroggo Casanova
 -- ToAU Quest: Prince and the Hopper
 -----------------------------------
-local ID = require("scripts/zones/Mamook/IDs")
+local ID = zones[xi.zone.MAMOOK]
+mixins = { require('scripts/mixins/families/poroggo') }
 -----------------------------------
 local entity = {}
 

@@ -4,16 +4,20 @@
 -- Note: PH for Da'Dha Hundredmask
 -- Involved in Mission 3-1 (Bastok)
 -----------------------------------
-local ID = require("scripts/zones/Beadeaux/IDs")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.BEADEAUX]
 -----------------------------------
 local entity = {}
+
+local daDhaPHTable =
+{
+    [ID.mob.DA_DHA_HUNDREDMASK - 1] = ID.mob.DA_DHA_HUNDREDMASK,
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.DA_DHA_HUNDREDMASK_PH, 10, 5400) -- 90 minutes
+    xi.mob.phOnDespawn(mob, daDhaPHTable, 10, 5400) -- 90 minutes
 end
 
 return entity

@@ -7,13 +7,6 @@
 -- Pius            : !pos 99 -21 -12 237
 -- Savae E Paleade : !pos 23.724 -17.39 -43.360 237
 -----------------------------------
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.JOURNEY_TO_BASTOK2)
 
@@ -126,7 +119,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 10 and
-                        player:getLocalVar('battlefieldWin') == 64
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_2_MISSION_2
                     then
                         npcUtil.giveKeyItem(player, xi.ki.KINDRED_CREST)
                         player:delKeyItem(xi.ki.DARK_KEY)

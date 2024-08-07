@@ -20,12 +20,14 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 */
 
 #include "state.h"
-#include "../../entities/baseentity.h"
+#include "entities/baseentity.h"
 
 CState::CState(CBaseEntity* PEntity, uint16 _targid)
 : m_PEntity(PEntity)
 , m_targid(_targid)
 {
+    // TODO: determine if this should go here;
+    // m_PTarget = m_PEntity->GetEntity(_targid);
 }
 
 void CState::UpdateTarget(uint16 targid)
@@ -65,7 +67,7 @@ void CState::ResetEntryTime()
 
 void CState::SetTarget(uint16 _targid)
 {
-    if (_targid != m_targid)
+    if (!m_PTarget || _targid != m_targid || (m_PTarget && m_PTarget->targid != _targid))
     {
         m_targid = _targid;
         UpdateTarget(_targid);

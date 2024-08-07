@@ -2,7 +2,7 @@
 --  MOB: Marid
 -- Area: Nyzul Isle
 -----------------------------------
-require('scripts/globals/nyzul')
+mixins = { require('scripts/mixins/families/marid') }
 -----------------------------------
 local entity = {}
 

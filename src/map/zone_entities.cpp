@@ -73,14 +73,50 @@ namespace
 typedef std::pair<float, CCharEntity*> CharScorePair;
 
 CZoneEntities::CZoneEntities(CZone* zone)
-: m_zone(zone)
-, m_Transport(nullptr)
+: nextDynamicTargID(0x700) // Start of dynamic entity range // TODO: Make this into a constexpr somewhere.
+, m_zone(zone)
+, lastCharComputeTargId(0)
 , lastCharPersistTargId(0)
 {
-    lastCharComputeTargId = 0;
 }
 
-CZoneEntities::~CZoneEntities() = default;
+CZoneEntities::~CZoneEntities()
+{
+    for (auto ally : m_allyList)
+    {
+        destroy(ally.second);
+    }
+
+    for (auto mob : m_mobList)
+    {
+        destroy(mob.second);
+    }
+
+    for (auto pet : m_petList)
+    {
+        destroy(pet.second);
+    }
+
+    for (auto trust : m_trustList)
+    {
+        destroy(trust.second);
+    }
+
+    for (auto npc : m_npcList)
+    {
+        destroy(npc.second);
+    }
+
+    for (auto character : m_charList)
+    {
+        destroy(character.second);
+    }
+
+    for (auto transport : m_TransportList)
+    {
+        destroy(transport.second);
+    }
+}
 
 void CZoneEntities::HealAllMobs()
 {
@@ -100,7 +136,7 @@ void CZoneEntities::InsertPC(CCharEntity* PChar)
     PChar->loc.zone = m_zone;
     charTargIds.insert(PChar->targid);
     m_charList[PChar->targid] = PChar;
-    ShowDebug("CZone:: %s IncreaseZoneCounter <%u> %s", m_zone->GetName(), m_charList.size(), PChar->GetName());
+    ShowDebug("CZone:: %s IncreaseZoneCounter <%u> %s", m_zone->getName(), m_charList.size(), PChar->getName());
 }
 
 void CZoneEntities::InsertAlly(CBaseEntity* PMob)
@@ -134,8 +170,12 @@ void CZoneEntities::InsertNPC(CBaseEntity* PNpc)
 
         if (PNpc->look.size == MODEL_SHIP)
         {
-            m_Transport = PNpc;
+            m_TransportList[PNpc->targid] = PNpc;
             return;
+        }
+        if (m_npcList.contains(PNpc->targid))
+        {
+            ShowError("Error: Inserting NPC with duplicate ID!");
         }
         m_npcList[PNpc->targid] = PNpc;
     }
@@ -215,16 +255,25 @@ void CZoneEntities::DeleteTRUST(CBaseEntity* PTrust)
 void CZoneEntities::FindPartyForMob(CBaseEntity* PEntity)
 {
     TracyZoneScoped;
-    XI_DEBUG_BREAK_IF(PEntity == nullptr);
-    XI_DEBUG_BREAK_IF(PEntity->objtype != TYPE_MOB);
+    if (PEntity == nullptr)
+    {
+        ShowWarning("PEntity was null.");
+        return;
+    }
+
+    if (PEntity->objtype != TYPE_MOB)
+    {
+        ShowWarning("Non-MOB was passed into function (%s).", PEntity->getName());
+        return;
+    }
 
     CMobEntity* PMob = (CMobEntity*)PEntity;
 
     // force all mobs in a burning circle to link
-    ZONE_TYPE zonetype  = m_zone->GetType();
-    bool      forceLink = zonetype == ZONE_TYPE::DYNAMIS || zonetype == ZONE_TYPE::BATTLEFIELD || PMob->getMobMod(MOBMOD_SUPERLINK);
+    ZONE_TYPE zonetype  = m_zone->GetTypeMask();
+    bool      forceLink = zonetype & ZONE_TYPE::DYNAMIS || PMob->getMobMod(MOBMOD_SUPERLINK);
 
-    if ((forceLink || PMob->m_Link) && PMob->PParty == nullptr)
+    if ((forceLink || PMob->m_Link || PMob->m_Type & MOBTYPE_BATTLEFIELD) && PMob->PParty == nullptr)
     {
         for (EntityList_t::const_iterator it = m_mobList.begin(); it != m_mobList.end(); ++it)
         {
@@ -335,7 +384,7 @@ void CZoneEntities::WeatherChange(WEATHER weather)
     }
 }
 
-void CZoneEntities::MusicChange(uint8 BlockID, uint8 MusicTrackID)
+void CZoneEntities::MusicChange(uint16 BlockID, uint16 MusicTrackID)
 {
     for (EntityList_t::const_iterator it = m_charList.begin(); it != m_charList.end(); ++it)
     {
@@ -350,8 +399,18 @@ void CZoneEntities::MusicChange(uint8 BlockID, uint8 MusicTrackID)
 
 void CZoneEntities::DecreaseZoneCounter(CCharEntity* PChar)
 {
-    XI_DEBUG_BREAK_IF(PChar == nullptr);
-    XI_DEBUG_BREAK_IF(PChar->loc.zone != m_zone);
+    if (PChar == nullptr)
+    {
+        ShowWarning("PChar is null.");
+        return;
+    }
+
+    if (PChar->loc.zone != m_zone)
+    {
+        ShowWarning("Zone mismatch for %s.", PChar->getName());
+        return;
+    }
+
     TracyZoneScoped;
 
     battleutils::RelinquishClaim(PChar);
@@ -432,12 +491,18 @@ void CZoneEntities::DecreaseZoneCounter(CCharEntity* PChar)
         synthutils::sendSynthDone(PChar);
     }
 
-    // TODO: могут возникать проблемы с переходом между одной и той же зоной (zone == prevzone)
+    // TODO: There may be problems transitioning between the same zone (zone == prevzone)
 
     m_charList.erase(PChar->targid);
     charTargIds.erase(PChar->targid);
 
-    ShowDebug("CZone:: %s DecreaseZoneCounter <%u> %s", m_zone->GetName(), m_charList.size(), PChar->GetName());
+    // Need to interupt fishing on zone out otherwise fished up mobs get stuck in hooked state
+    if (PChar->hookedFish && PChar->hookedFish->hooked == true)
+    {
+        fishingutils::InterruptFishing(PChar);
+    }
+
+    ShowDebug("CZone:: %s DecreaseZoneCounter <%u> %s", m_zone->getName(), m_charList.size(), PChar->getName());
 }
 
 uint16 CZoneEntities::GetNewCharTargID()
@@ -463,23 +528,40 @@ uint16 CZoneEntities::GetNewCharTargID()
 void CZoneEntities::AssignDynamicTargIDandLongID(CBaseEntity* PEntity)
 {
     // NOTE: 0x0E (entity_update) entity updates are valid for 0 to 1023 and 1792 to 2303
-    uint16 targid = 0x700;
-    for (auto it : dynamicTargIds)
+    // Step targid up linearly from 0x700 one by one to 0x8FF unless that ID is already occupied.
+    uint16 targid = nextDynamicTargID;
+
+    // Wrap around 0x8FF to 0x700
+    if (targid > 0x8FF)
     {
-        if (targid != it)
+        targid = 0x700;
+    }
+
+    uint16 counter = 0;
+
+    // Find next available targid, starting with the computed one above.
+    while (std::find(dynamicTargIds.begin(), dynamicTargIds.end(), targid) != dynamicTargIds.end())
+    {
+        targid++;
+        // Wrap around 0x8FF to 0x700
+        if (targid > 0x8FF)
         {
+            targid = 0x700;
+        }
+
+        if (counter > 0x1FF)
+        {
+            ShowError(fmt::format("dynamicTargIds list full in zone {}!", m_zone->getName()));
+            targid = 0x900;
             break;
         }
-        targid++;
+        counter++;
     }
 
-    auto id = 0x1000000 + (m_zone->GetID() << 12) + targid;
+    // We found our targid, the next dynamic entity will want to start searching at +1 of this.
+    nextDynamicTargID = targid + 1;
 
-    // Add 0x100 if targid is >= 0x800 -- observed on retail.
-    if (targid >= 0x800)
-    {
-        id += 0x100;
-    }
+    auto id = 0x01000000 | (m_zone->GetID() << 0x0C) | (targid + 0x0100);
 
     dynamicTargIds.insert(targid);
 
@@ -535,7 +617,7 @@ void CZoneEntities::SpawnMOBs(CCharEntity* PChar)
             }
 
             // Check to skip aggro routine
-            if (PChar->isDead() || PChar->nameflags.flags & FLAG_GM || PCurrentMob->PMaster)
+            if (PChar->isDead() || PChar->visibleGmLevel >= 3 || PCurrentMob->PMaster)
             {
                 continue;
             }
@@ -545,11 +627,20 @@ void CZoneEntities::SpawnMOBs(CCharEntity* PChar)
 
             CMobController* PController = static_cast<CMobController*>(PCurrentMob->PAI->GetController());
 
-            bool validAggro = mobCheck > EMobDifficulty::TooWeak || PChar->isSitting() || PCurrentMob->getMobMod(MOBMOD_ALWAYS_AGGRO);
+            // Check if this mob follows targets and if so then it should not aggro
+            if (PCurrentMob->m_roamFlags & ROAMFLAG_FOLLOW)
+            {
+                if (PController->CanFollowTarget(PChar))
+                {
+                    PController->SetFollowTarget(PChar, FollowType::Roam);
+                }
+                continue;
+            }
 
+            bool validAggro = mobCheck > EMobDifficulty::TooWeak || PChar->isSitting() || PCurrentMob->getMobMod(MOBMOD_ALWAYS_AGGRO);
             if (validAggro && PController->CanAggroTarget(PChar))
             {
-                PCurrentMob->PEnmityContainer->AddBaseEnmity(PChar);
+                PCurrentMob->PAI->Engage(PChar->targid);
             }
         }
         else if (MOB != PChar->SpawnMOBList.end())
@@ -570,7 +661,7 @@ void CZoneEntities::SpawnPETs(CCharEntity* PChar)
         SpawnIDList_t::iterator PET         = PChar->SpawnPETList.find(PCurrentPet->id);
 
         // Is this pet "visible" to the player?
-        if ((PCurrentPet->status == STATUS_TYPE::NORMAL || PCurrentPet->status == STATUS_TYPE::MOB) && distance(PChar->loc.p, PCurrentPet->loc.p) <= 50)
+        if ((PCurrentPet->status == STATUS_TYPE::NORMAL || PCurrentPet->status == STATUS_TYPE::UPDATE) && distance(PChar->loc.p, PCurrentPet->loc.p) <= 50)
         {
             // pet not in update list for player, add it in
             if (PET == PChar->SpawnPETList.end())
@@ -598,7 +689,7 @@ void CZoneEntities::SpawnNPCs(CCharEntity* PChar)
             CNpcEntity*             PCurrentNpc = (CNpcEntity*)it->second;
             SpawnIDList_t::iterator NPC         = PChar->SpawnNPCList.find(PCurrentNpc->id);
 
-            if (PCurrentNpc->status == STATUS_TYPE::NORMAL || PCurrentNpc->status == STATUS_TYPE::MOB)
+            if (PCurrentNpc->status == STATUS_TYPE::NORMAL || PCurrentNpc->status == STATUS_TYPE::UPDATE)
             {
                 // Is this npc "visible" to the player?
                 if (distance(PChar->loc.p, PCurrentNpc->loc.p) <= 50)
@@ -616,6 +707,12 @@ void CZoneEntities::SpawnNPCs(CCharEntity* PChar)
                     PChar->SpawnNPCList.erase(NPC);
                     PChar->updateEntityPacket(PCurrentNpc, ENTITY_DESPAWN, UPDATE_NONE);
                 }
+            }
+            // NPC not visible, remove it from spawn list if it's in there
+            else if (NPC != PChar->SpawnNPCList.end())
+            {
+                PChar->SpawnNPCList.erase(NPC);
+                PChar->updateEntityPacket(PCurrentNpc, ENTITY_DESPAWN, UPDATE_NONE);
             }
         }
     }
@@ -687,7 +784,19 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
 
     for (auto mobEntry : PChar->SpawnMOBList)
     {
-        CState* state = mobEntry.second->PAI->GetCurrentState();
+        auto* PMob = mobEntry.second;
+        if (PMob == nullptr)
+        {
+            // clang-format off
+            auto targId       = mobEntry.first - 0x1000000 - (m_zone->GetID() << 12);
+            auto isDynamicStr = targId >= 0x700 ? "Dynamic" : "Static";
+            ShowError(fmt::format("Empty {} Mob entry (targId: {}) found in {}'s SpawnMOBList in {}! This indicates an improperly cleaned-up Mob object! This is dangerous!",
+                                  isDynamicStr, targId, PChar->name, m_zone->getName()).c_str());
+            // clang-format on
+            continue;
+        }
+
+        CState* state = PMob->PAI->GetCurrentState();
         if (!state)
         {
             continue;
@@ -711,7 +820,20 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
         // Despawn character if it's a hidden GM, is in a different mog house, or if player is in a conflict while other is not, or too far up/down
         if (pc->m_isGMHidden || PChar->m_moghouseID != pc->m_moghouseID)
         {
-            toRemove.push_back(pc);
+            toRemove.emplace_back(pc);
+            continue;
+        }
+
+        // TODO: This is a temporary fix so that Feretory _seems_ like a solo zone.
+        // We need a better solution for this that properly supports:
+        // - Shared moghouse (both floors)
+        // - Mog Garden
+        // - Feretory
+        // and the NPCs that exist per-player in those zones (Garden, Music Items in MH, etc.)
+        // Despawn character if it's a hidden GM, is in a different mog house, or if player is in a conflict while other is not, or too far up/down
+        if (PChar->loc.zone->GetID() == ZONE_FERETORY)
+        {
+            toRemove.emplace_back(pc);
             continue;
         }
 
@@ -719,7 +841,7 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
         float charDistance = distance(PChar->loc.p, pc->loc.p);
         if (charDistance >= CHARACTER_DESPAWN_DISTANCE)
         {
-            toRemove.push_back(pc);
+            toRemove.emplace_back(pc);
             continue;
         }
 
@@ -798,7 +920,7 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
         std::vector<CharScorePair> candidates;
         while (!candidateCharacters.empty())
         {
-            candidates.push_back(candidateCharacters.top());
+            candidates.emplace_back(candidateCharacters.top());
             candidateCharacters.pop();
         }
         std::reverse(candidates.begin(), candidates.end());
@@ -877,10 +999,9 @@ void CZoneEntities::SpawnMoogle(CCharEntity* PChar)
 void CZoneEntities::SpawnTransport(CCharEntity* PChar)
 {
     TracyZoneScoped;
-    if (m_Transport != nullptr)
+    for (auto transport : m_TransportList)
     {
-        PChar->updateEntityPacket(m_Transport, ENTITY_SPAWN, UPDATE_ALL_MOB);
-        return;
+        PChar->updateEntityPacket(transport.second, ENTITY_SPAWN, UPDATE_ALL_MOB);
     }
 }
 
@@ -907,9 +1028,10 @@ CBaseEntity* CZoneEntities::GetEntity(uint16 targid, uint8 filter)
         }
         if (filter & TYPE_SHIP)
         {
-            if (m_Transport != nullptr && m_Transport->targid == targid)
+            EntityList_t::const_iterator it = m_TransportList.find(targid);
+            if (it != m_TransportList.end())
             {
-                return m_Transport;
+                return it->second;
             }
         }
     }
@@ -1084,7 +1206,7 @@ CCharEntity* CZoneEntities::GetCharByName(const std::string& name)
         {
             CCharEntity* PCurrentChar = (CCharEntity*)it->second;
 
-            if (strcmpi(PCurrentChar->GetName().c_str(), name.c_str()) == 0)
+            if (strcmpi(PCurrentChar->getName().c_str(), name.c_str()) == 0)
             {
                 return PCurrentChar;
             }
@@ -1171,7 +1293,7 @@ void CZoneEntities::PushPacket(CBaseEntity* PEntity, GLOBAL_MESSAGE_TYPE message
         // clang-format off
         switch (message_type)
         {
-            case CHAR_INRANGE_SELF:
+            case CHAR_INRANGE_SELF: // NOTE!!!: This falls through to CHAR_INRANGE so both self and the local area get the packet
             {
                 TracyZoneCString("CHAR_INRANGE_SELF");
                 if (PEntity->objtype == TYPE_PC)
@@ -1195,49 +1317,71 @@ void CZoneEntities::PushPacket(CBaseEntity* PEntity, GLOBAL_MESSAGE_TYPE message
                         if (distanceSquared(PEntity->loc.p, PCurrentChar->loc.p) < checkDistanceSq &&
                             ((PEntity->objtype != TYPE_PC) || (((CCharEntity*)PEntity)->m_moghouseID == PCurrentChar->m_moghouseID)))
                         {
-                            if (packet->getType() == 0x00E && (packet->ref<uint8>(0x0A) != 0x20 || packet->ref<uint8>(0x0A) != 0x0F))
+                            uint16 packetType = packet->getType();
+                            if
+                                ((packetType == 0x00E && // Entity Update
+                                (packet->ref<uint8>(0x0A) != 0x20 ||
+                                packet->ref<uint8>(0x0A) != 0x0F)) ||
+                                packetType == 0x028) // Action packet
                             {
-                                uint32 id     = packet->ref<uint32>(0x04);
-                                uint16 targid = packet->ref<uint16>(0x08);
+                                uint32 id           = 0;
+                                uint16 targid       = 0;
+                                CBaseEntity* entity = nullptr;
 
-                                CBaseEntity* entity = GetEntity(targid);
-
-                                SpawnIDList_t spawnlist;
-
-                                if (entity)
+                                if (packetType == 0x00E) // Entity update
                                 {
-                                    if (entity->objtype == TYPE_MOB)
+                                    id     = packet->ref<uint32>(0x04);
+                                    targid = packet->ref<uint16>(0x08);
+                                    entity = GetEntity(targid);
+                                }
+                                else if (packetType == 0x028) // Action packet
+                                {
+                                    id     = packet->ref<uint32>(0x05);
+                                    // Try char
+                                    entity = GetCharByID(id);
+
+                                    // Try everything else
+                                    if (!entity)
                                     {
-                                        spawnlist = PCurrentChar->SpawnMOBList;
-                                    }
-                                    else if (entity->objtype == TYPE_NPC)
-                                    {
-                                        spawnlist = PCurrentChar->SpawnNPCList;
-                                    }
-                                    else if (entity->objtype == TYPE_PET)
-                                    {
-                                        spawnlist = PCurrentChar->SpawnPETList;
-                                    }
-                                    else if (entity->objtype == TYPE_TRUST)
-                                    {
-                                        spawnlist = PCurrentChar->SpawnTRUSTList;
-                                    }
-                                    else
-                                    {
-                                        entity = nullptr;
+                                        entity = zoneutils::GetEntity(id);
                                     }
                                 }
+
+                                // If everything else failed
                                 if (!entity)
                                 {
-                                    // got a char or nothing as the target of this entity update (which really shouldn't happen ever)
-                                    // so we're just going to skip this packet
+                                    // No target entity in spawnlists found, so we're just going to skip this packet
                                     break;
                                 }
-                                SpawnIDList_t::iterator iter = spawnlist.lower_bound(id);
 
-                                if (!(iter == spawnlist.end() || spawnlist.key_comp()(id, iter->first)))
+                                auto pushPacketIfInSpawnList = [&](CCharEntity* PChar, SpawnIDList_t const& spawnlist)
                                 {
-                                    PCurrentChar->pushPacket(new CBasicPacket(*packet));
+                                    SpawnIDList_t::const_iterator iter = spawnlist.lower_bound(id);
+                                    if (!(iter == spawnlist.end() || spawnlist.key_comp()(id, iter->first)))
+                                    {
+                                        PCurrentChar->pushPacket(new CBasicPacket(*packet));
+                                    }
+                                };
+
+                                switch(entity->objtype)
+                                {
+                                    case TYPE_MOB:
+                                        pushPacketIfInSpawnList(PCurrentChar, PCurrentChar->SpawnMOBList);
+                                        break;
+                                    case TYPE_NPC:
+                                        pushPacketIfInSpawnList(PCurrentChar, PCurrentChar->SpawnNPCList);
+                                        break;
+                                    case TYPE_PET:
+                                        pushPacketIfInSpawnList(PCurrentChar, PCurrentChar->SpawnPETList);
+                                        break;
+                                    case TYPE_TRUST:
+                                        pushPacketIfInSpawnList(PCurrentChar, PCurrentChar->SpawnTRUSTList);
+                                        break;
+                                    case TYPE_PC:
+                                        pushPacketIfInSpawnList(PCurrentChar, PCurrentChar->SpawnPCList);
+                                        break;
+                                    default:
+                                        break;
                                 }
                             }
                             else
@@ -1312,10 +1456,10 @@ void CZoneEntities::WideScan(CCharEntity* PChar, uint16 radius)
     PChar->pushPacket(new CWideScanPacket(WIDESCAN_END));
 }
 
-void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
+void CZoneEntities::ZoneServer(time_point tick)
 {
     TracyZoneScoped;
-    TracyZoneString(m_zone->GetName());
+    TracyZoneString(m_zone->getName());
 
     luautils::OnZoneTick(this->m_zone);
 
@@ -1326,13 +1470,15 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
         CMobEntity* PMob = dynamic_cast<CMobEntity*>(it->second);
         if (!PMob)
         {
-            it++;
+            ++it;
             continue;
         }
 
+        ShowTrace(fmt::format("CZoneEntities::ZoneServer: Mob: {} ({})", PMob->getName(), PMob->id).c_str());
+
         if (PMob->PBattlefield && PMob->PBattlefield->CanCleanup())
         {
-            it++;
+            ++it;
             continue;
         }
 
@@ -1348,9 +1494,19 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
 
         if (PMob->status == STATUS_TYPE::DISAPPEAR && PMob->m_bReleaseTargIDOnDisappear)
         {
+            if (PMob->PPet != nullptr)
+            {
+                PMob->PPet->PMaster = nullptr;
+            }
+
+            if (PMob->PMaster != nullptr)
+            {
+                PMob->PMaster->PPet = nullptr;
+            }
+
             for (auto PMobIt : m_mobList)
             {
-                CMobEntity* PCurrentMob = (CMobEntity*)PMobIt.second;
+                CMobEntity* PCurrentMob = static_cast<CMobEntity*>(PMobIt.second);
                 PCurrentMob->PEnmityContainer->Clear(PMob->id);
             }
 
@@ -1361,8 +1517,19 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
 
             for (EntityList_t::const_iterator it = m_charList.begin(); it != m_charList.end(); ++it)
             {
-                CCharEntity* PChar = (CCharEntity*)it->second;
-                if (distance(PChar->loc.p, PMob->loc.p) < 50)
+                CCharEntity* PChar = static_cast<CCharEntity*>(it->second);
+
+                if (PChar->PClaimedMob == PMob)
+                {
+                    PChar->PClaimedMob = nullptr;
+                }
+
+                if (PChar->currentEvent && PChar->currentEvent->targetEntity == PMob)
+                {
+                    PChar->currentEvent->targetEntity = nullptr;
+                }
+
+                if (PChar->SpawnMOBList.find(PMob->id) != PChar->SpawnMOBList.end())
                 {
                     PChar->SpawnMOBList.erase(PMob->id);
                 }
@@ -1370,17 +1537,17 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
 
             it->second = nullptr;
             m_mobList.erase(it++);
-            dynamicTargIdsToDelete.push_back(std::make_pair(PMob->targid, server_clock::now()));
+            dynamicTargIdsToDelete.emplace_back(std::make_pair(PMob->targid, server_clock::now()));
             destroy(PMob);
             continue;
         }
 
         if (PMob->allegiance == ALLEGIANCE_TYPE::PLAYER && PMob->m_isAggroable)
         {
-            aggroableMobs.push_back(PMob);
+            aggroableMobs.emplace_back(PMob);
         }
 
-        it++;
+        ++it;
     }
 
     // Check to see if any aggroable mobs should be aggroed by other mobs
@@ -1394,7 +1561,7 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
                 CMobController* PController = static_cast<CMobController*>(PCurrentMob->PAI->GetController());
                 if (PController != nullptr && PController->CanAggroTarget(PMob))
                 {
-                    PCurrentMob->PEnmityContainer->AddBaseEnmity(PMob);
+                    PCurrentMob->PAI->Engage(PMob->targid);
                 }
             }
         }
@@ -1404,6 +1571,9 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
     while (it != m_npcList.end())
     {
         CNpcEntity* PNpc = (CNpcEntity*)it->second;
+
+        ShowTrace(fmt::format("CZoneEntities::ZoneServer: NPC: {} ({})", PNpc->getName(), PNpc->id).c_str());
+
         PNpc->PAI->Tick(tick);
 
         // This is only valid for dynamic entities
@@ -1412,19 +1582,19 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
             for (EntityList_t::const_iterator it = m_charList.begin(); it != m_charList.end(); ++it)
             {
                 CCharEntity* PChar = (CCharEntity*)it->second;
-                if (distance(PChar->loc.p, PNpc->loc.p) < 50)
+                if (PChar->SpawnNPCList.find(PNpc->id) != PChar->SpawnNPCList.end())
                 {
                     PChar->SpawnNPCList.erase(PNpc->id);
                 }
             }
 
             destroy(it->second);
-            dynamicTargIdsToDelete.push_back({ it->first, server_clock::now() });
+            dynamicTargIdsToDelete.emplace_back(std::make_pair(it->first, server_clock::now()));
 
             m_npcList.erase(it++);
             continue;
         }
-        it++;
+        ++it;
     }
 
     it = m_petList.begin();
@@ -1434,15 +1604,13 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
         //     : this way, but we need to do this to keep allies working (for now).
         if (auto* PPet = static_cast<CPetEntity*>(it->second))
         {
-            PPet->PRecastContainer->Check();
-            PPet->StatusEffectContainer->CheckEffectsExpiry(tick);
-            if (tick > m_EffectCheckTime)
-            {
-                PPet->StatusEffectContainer->TickRegen(tick);
-                PPet->StatusEffectContainer->TickEffects(tick);
-            }
-            PPet->PAI->Tick(tick);
+            ShowTrace(fmt::format("CZoneEntities::ZoneServer: Pet: {} ({})", PPet->getName(), PPet->id).c_str());
 
+            /*
+             * Pets specifically need to be removed prior to evaluating their AI Tick
+             * to prevent a number of issues which can result as a Pet having a
+             * deleted/nullptr'd PMaster
+             */
             if (PPet->status == STATUS_TYPE::DISAPPEAR)
             {
                 for (auto PMobIt : m_mobList)
@@ -1456,13 +1624,22 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
                     destroy(it->second);
                 }
 
-                dynamicTargIdsToDelete.push_back(std::make_pair(it->first, server_clock::now()));
+                dynamicTargIdsToDelete.emplace_back(std::make_pair(it->first, server_clock::now()));
 
                 m_petList.erase(it++);
                 continue;
             }
+
+            PPet->PRecastContainer->Check();
+            PPet->StatusEffectContainer->CheckEffectsExpiry(tick);
+            if (tick > m_EffectCheckTime)
+            {
+                PPet->StatusEffectContainer->TickRegen(tick);
+                PPet->StatusEffectContainer->TickEffects(tick);
+            }
+            PPet->PAI->Tick(tick);
         }
-        it++;
+        ++it;
     }
 
     it = m_trustList.begin();
@@ -1470,6 +1647,8 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
     {
         if (CTrustEntity* PTrust = dynamic_cast<CTrustEntity*>(it->second))
         {
+            ShowTrace(fmt::format("CZoneEntities::ZoneServer: Trust: {} ({})", PTrust->getName(), PTrust->id).c_str());
+
             PTrust->PRecastContainer->Check();
             PTrust->StatusEffectContainer->CheckEffectsExpiry(tick);
             if (tick > m_EffectCheckTime)
@@ -1501,18 +1680,20 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
                 }
 
                 destroy(it->second);
-                dynamicTargIdsToDelete.push_back(std::make_pair(it->first, server_clock::now()));
+                dynamicTargIdsToDelete.emplace_back(std::make_pair(it->first, server_clock::now()));
 
                 m_trustList.erase(it++);
                 continue;
             }
         }
-        it++;
+        ++it;
     }
 
     for (EntityList_t::const_iterator it = m_charList.begin(); it != m_charList.end(); ++it)
     {
         CCharEntity* PChar = (CCharEntity*)it->second;
+
+        ShowTrace(fmt::format("CZoneEntities::ZoneServer: Char: {} ({})", PChar->getName(), PChar->id).c_str());
 
         if (PChar->status != STATUS_TYPE::SHUTDOWN)
         {
@@ -1525,10 +1706,6 @@ void CZoneEntities::ZoneServer(time_point tick, bool check_trigger_areas)
             }
             PChar->PAI->Tick(tick);
             PChar->PTreasurePool->CheckItems(tick);
-            if (check_trigger_areas)
-            {
-                m_zone->CheckTriggerAreas(PChar);
-            }
         }
     }
 

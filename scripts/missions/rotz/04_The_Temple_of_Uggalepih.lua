@@ -7,11 +7,6 @@
 -- Jakoh Wahcondalo     : !pos 101 -16 -115 250
 -- Mahogany Door (BCNM) : !pos 299 0.1 349 163
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.ZILART, xi.mission.id.zilart.THE_TEMPLE_OF_UGGALEPIH)
 
@@ -74,7 +69,7 @@ mission.sections =
             onEventFinish =
             {
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 128 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.TEMPLE_OF_UGGALEPIH then
                         player:setMissionStatus(mission.areaId, 1)
                         player:setPos(-329.762, -0.015, -300.172, 127, xi.zone.SACRIFICIAL_CHAMBER)
                     end
@@ -105,7 +100,7 @@ mission.sections =
     {
         check = function(player, currentMission, missionStatus, vars)
             return currentMission ~= mission.missionId and
-                player:getLocalVar('battlefieldWin') == 128
+                player:getLocalVar('battlefieldWin') == xi.battlefield.id.TEMPLE_OF_UGGALEPIH
         end,
 
         [xi.zone.SACRIFICIAL_CHAMBER] =

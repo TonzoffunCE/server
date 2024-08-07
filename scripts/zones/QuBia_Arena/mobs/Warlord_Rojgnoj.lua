@@ -1,11 +1,9 @@
 -----------------------------------
 -- Area: QuBia_Arena
 --  Mob: Warlord Rojgnoj
--- Mission 9-2 SANDO
+-- Mission 9-2 San d'Oria
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
-require("scripts/globals/status")
-local ID = require("scripts/zones/QuBia_Arena/IDs")
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
@@ -14,10 +12,6 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
-    local battlefield = mob:getBattlefield()
-    if battlefield then
-        battlefield:setLocalVar("phaseChange", 0)
-    end
 end
 
 entity.onMobDeath = function(mob, player, optParams)

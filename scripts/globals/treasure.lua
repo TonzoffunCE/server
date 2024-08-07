@@ -3,15 +3,9 @@
 -- http://ffxiclopedia.wikia.com/wiki/Picking_your_Coffers_and_Chests
 -- http://ffxiclopedia.wikia.com/wiki/Treasure_Chest_and_Coffer_Guide
 -----------------------------------
-require("scripts/globals/items")
-require("scripts/globals/keyitems")
-require("scripts/globals/npc_util")
-require("scripts/globals/settings")
-require("scripts/globals/quests")
-require("scripts/globals/status")
-require("scripts/globals/zone")
+require('scripts/globals/npc_util')
+require('scripts/globals/quests')
 -----------------------------------
-
 xi = xi or {}
 xi.treasure = xi.treasure or {}
 
@@ -32,9 +26,9 @@ local keyType =
 local thiefKeyInfo =
 {
 --   Key                       Item ID                       Success Modifier
-    [keyType.THIEF_TOOLS ] = { xi.items.SET_OF_THIEFS_TOOLS, 0.1  },
-    [keyType.SKELETON_KEY] = { xi.items.SKELETON_KEY,        0.2  },
-    [keyType.LIVING_KEY  ] = { xi.items.LIVING_KEY,          0.15 },
+    [keyType.THIEF_TOOLS ] = { xi.item.SET_OF_THIEFS_TOOLS, 0.1  },
+    [keyType.SKELETON_KEY] = { xi.item.SKELETON_KEY,        0.2  },
+    [keyType.LIVING_KEY  ] = { xi.item.LIVING_KEY,          0.15 },
 }
 
 xi.treasure.treasureInfo =
@@ -151,8 +145,9 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.BASTOK, xi.quest.id.bastok.FADED_PROMISES) == QUEST_ACCEPTED and
-                                player:getCharVar("FadedPromises") == 2 and not player:hasKeyItem(xi.ki.DIARY_OF_MUKUNDA)
+                            return player:getQuestStatus(xi.questLog.BASTOK, xi.quest.id.bastok.FADED_PROMISES) == xi.questStatus.QUEST_ACCEPTED and
+                                xi.quest.getVar(player, xi.questLog.BASTOK, xi.quest.id.bastok.FADED_PROMISES, 'Prog') == 1 and
+                                not player:hasKeyItem(xi.ki.DIARY_OF_MUKUNDA)
                         end,
 
                         code = function(player)
@@ -259,12 +254,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.SCATTERED_INTO_SHADOW) == QUEST_ACCEPTED and
-                                player:getCharVar("scatIntoShadowCS") == 1 and not player:hasItem(13121)
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.SCATTERED_INTO_SHADOW) == xi.questStatus.QUEST_ACCEPTED and
+                                player:getCharVar('scatIntoShadowCS') == 1 and not player:hasItem(xi.item.BEAST_COLLAR)
                         end,
 
                         code = function(player)
-                            npcUtil.giveItem(player, xi.items.BEAST_COLLAR)
+                            npcUtil.giveItem(player, xi.item.BEAST_COLLAR)
                         end,
                     },
                 },
@@ -297,7 +292,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.WINGS_OF_GOLD) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.WINGS_OF_GOLD) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.GUIDING_BELL)
                         end,
 
@@ -330,7 +325,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.WINGS_OF_GOLD) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.WINGS_OF_GOLD) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.GUIDING_BELL)
                         end,
 
@@ -359,13 +354,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.UN_MOMENT)
                         end,
 
                         code = function(player)
                             npcUtil.giveKeyItem(player, xi.ki.UN_MOMENT)
-                            player:incrementCharVar("ATestOfTrueLoveProgress", 1)
                         end,
                     },
                 },
@@ -400,13 +394,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.UN_MOMENT)
                         end,
 
                         code = function(player)
                             npcUtil.giveKeyItem(player, xi.ki.UN_MOMENT)
-                            player:incrementCharVar("ATestOfTrueLoveProgress", 1)
                         end,
                     },
                 },
@@ -428,13 +421,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.LEPHEMERE)
                         end,
 
                         code = function(player)
                             npcUtil.giveKeyItem(player, xi.ki.LEPHEMERE)
-                            player:incrementCharVar("ATestOfTrueLoveProgress", 1)
                         end,
                     },
                 },
@@ -530,8 +522,8 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SIGNED_IN_BLOOD) == QUEST_ACCEPTED and
-                                player:getCharVar("Quest[0][108]Prog") == 2 and
+                            return player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.SIGNED_IN_BLOOD) == xi.questStatus.QUEST_ACCEPTED and
+                                player:getCharVar('Quest[0][108]Prog') == 2 and
                                 not player:hasKeyItem(xi.ki.TORN_OUT_PAGES)
                         end,
 
@@ -542,7 +534,7 @@ xi.treasure.treasureInfo =
 
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= xi.questStatus.QUEST_ACCEPTED and
                                 VanadielRSELocation() == 0 and
                                 VanadielRSERace() == player:getRace() and
                                 not player:hasKeyItem(xi.ki.MAGICAL_PATTERN)
@@ -619,7 +611,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= xi.questStatus.QUEST_ACCEPTED and
                                 VanadielRSELocation() == 1 and
                                 VanadielRSERace() == player:getRace() and
                                 not player:hasKeyItem(xi.ki.MAGICAL_PATTERN)
@@ -658,8 +650,8 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return xi.quest.getVar(player, xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS, 'Prog') >= 2 and
-                                xi.quest.getVar(player, xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS, 'Time') == 0 and
+                            return xi.quest.getVar(player, xi.questLog.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS, 'Prog') >= 2 and
+                                xi.quest.getVar(player, xi.questLog.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS, 'Time') == 0 and
                                 not player:hasKeyItem(xi.ki.CRAWLER_BLOOD)
                         end,
 
@@ -697,7 +689,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.THE_GOBLIN_TAILOR) >= xi.questStatus.QUEST_ACCEPTED and
                                 VanadielRSELocation() == 2 and
                                 VanadielRSERace() == player:getRace() and
                                 not player:hasKeyItem(xi.ki.MAGICAL_PATTERN)
@@ -762,7 +754,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SORCERY_OF_THE_NORTH) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.SORCERY_OF_THE_NORTH) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.FEIYIN_MAGIC_TOME)
                         end,
 
@@ -802,13 +794,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == QUEST_ACCEPTED and
+                            return player:getQuestStatus(xi.questLog.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE) == xi.questStatus.QUEST_ACCEPTED and
                                 not player:hasKeyItem(xi.ki.LANCIENNE)
                         end,
 
                         code = function(player)
                             npcUtil.giveKeyItem(player, xi.ki.LANCIENNE)
-                            player:incrementCharVar("ATestOfTrueLoveProgress", 1)
                         end,
                     },
                 },
@@ -1080,7 +1071,7 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getCharVar("UnderOathCS") == 3
+                            return player:getCharVar('UnderOathCS') == 3
                         end,
 
                         code = function(player)
@@ -1116,12 +1107,12 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getCharVar("WildCard") == 2
+                            return not player:hasKeyItem(xi.ki.JOKER_CARD) and
+                                (player:getCharVar('[2][77]Prog') == 2 or player:getCharVar('[2][77]Prog') == 3)
                         end,
 
                         code = function(player)
                             npcUtil.giveKeyItem(player, xi.ki.JOKER_CARD)
-                            player:setCharVar("WildCard", 3)
                         end,
                     },
                 },
@@ -1160,8 +1151,8 @@ xi.treasure.treasureInfo =
                 {
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.TRUE_WILL) == QUEST_ACCEPTED and
-                                player:getCharVar("trueWillCS") == 2 and
+                            return player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.TRUE_WILL) == xi.questStatus.QUEST_ACCEPTED and
+                                player:getCharVar('trueWillCS') == 2 and
                                 not player:hasKeyItem(xi.ki.LARGE_TRICK_BOX)
                         end,
 
@@ -1172,8 +1163,8 @@ xi.treasure.treasureInfo =
 
                     {
                         test = function(player)
-                            return player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.KNIGHT_STALKER) == QUEST_ACCEPTED and
-                                player:getCharVar("KnightStalker_Progress") == 1
+                            return player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.KNIGHT_STALKER) == xi.questStatus.QUEST_ACCEPTED and
+                                player:getCharVar('KnightStalker_Progress') == 1
                         end,
 
                         code = function(player)
@@ -1441,7 +1432,7 @@ local function spawnMimic(player, npc)
         npcUtil.popFromQM(player, npc, mimicId, { claim = true, hide = 5 })
         moveChest(npc, zoneId, xi.treasure.type.COFFER, true)
     else
-        printf("treasure.lua MIMIC id missing in zoneId %i", zoneId)
+        printf('treasure.lua MIMIC id missing in zoneId %i', zoneId)
     end
 end
 
@@ -1525,8 +1516,8 @@ xi.treasure.onTrade = function(player, npc, trade, chestType)
     local msgBase = ID.text.CHEST_UNLOCKED
     local info = xi.treasure.treasureInfo[chestType].zone[zoneId]
     local mJob = player:getMainJob()
-    local activeHands = player:getCharVar("BorghertzAlreadyActiveWithJob")
-    local illusionCooldown  = npc:getLocalVar("illusionCooldown")
+    local activeHands = player:getCharVar('BorghertzAlreadyActiveWithJob')
+    local illusionCooldown  = npc:getLocalVar('illusionCooldown')
 
     -- NOTE: The client blocks actions like this while invisible, but it's very easy to inject an action packet to get
     -- around this restriction. Strip invisible to make sure that case is covered.
@@ -1583,7 +1574,7 @@ xi.treasure.onTrade = function(player, npc, trade, chestType)
         if
             info.af and
             info.af[mJob] and
-            player:getQuestStatus(xi.quest.log_id.JEUNO, info.af[mJob].quest) >= QUEST_ACCEPTED and
+            player:getQuestStatus(xi.questLog.JEUNO, info.af[mJob].quest) >= xi.questStatus.QUEST_ACCEPTED and
             not player:hasItem(info.af[mJob].reward)
         then
             player:messageSpecial(msgBase)
@@ -1666,9 +1657,9 @@ xi.treasure.onTrade = function(player, npc, trade, chestType)
 
     player:confirmTrade()
     if chestType == xi.treasure.type.CHEST then
-        npc:setLocalVar("illusionCooldown", os.time() + math.random(xi.settings.main.CHEST_MIN_ILLUSION_TIME, xi.settings.main.CHEST_MAX_ILLUSION_TIME))
+        npc:setLocalVar('illusionCooldown', os.time() + math.random(xi.settings.main.CHEST_MIN_ILLUSION_TIME, xi.settings.main.CHEST_MAX_ILLUSION_TIME))
     else
-        npc:setLocalVar("illusionCooldown", os.time() + math.random(xi.settings.main.COFFER_MIN_ILLUSION_TIME, xi.settings.main.COFFER_MAX_ILLUSION_TIME))
+        npc:setLocalVar('illusionCooldown', os.time() + math.random(xi.settings.main.COFFER_MIN_ILLUSION_TIME, xi.settings.main.COFFER_MAX_ILLUSION_TIME))
     end
 
     moveChest(npc, zoneId, chestType)

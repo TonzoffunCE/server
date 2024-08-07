@@ -9,15 +9,6 @@
 -- Zokima-Rokima         : !pos 0 -16 124 239
 -- Vestal Chamber (_6q2) : !pos 0.1 -49 37 242
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/titles')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WINDURST, xi.mission.id.windurst.THE_FINAL_SEAL)
 
@@ -168,7 +159,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 11 and
-                        player:getLocalVar('battlefieldWin') == 512
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_5_MISSION
                     then
                         npcUtil.giveKeyItem(player, xi.ki.BURNT_SEAL)
                         player:setMissionStatus(mission.areaId, 12)

@@ -5,15 +5,7 @@
 -- !addmission 6 748
 -- Iron Gate : !pos 612 132 774 32
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require("scripts/globals/teleports")
-require('scripts/globals/titles')
-require('scripts/globals/utils')
-require('scripts/globals/zone')
------------------------------------
-local altaieuID = require("scripts/zones/AlTaieu/IDs")
+local altaieuID = zones[xi.zone.ALTAIEU]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.THE_WARRIORS_PATH)
@@ -91,7 +83,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         mission:getVar(player, 'Status') == 1 and
-                        player:getLocalVar('battlefieldWin') == 993
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.WARRIORS_PATH
                     then
                         mission:setVar(player, 'Status', 2)
                         player:setPos(612.057, 132.664, 776.920, 188, xi.zone.SEALIONS_DEN)
@@ -133,7 +125,7 @@ mission.sections =
                     mission:setVar(player, 'Option', 1)
                     -- Setup var for initial interactions with Sagheera.
                     -- This is a bitfield that has its bits removed as the player completes the necessary interactions.
-                    player:setCharVar("SagheeraInteractions", 7)
+                    player:setCharVar('SagheeraInteractions', 7)
                 end,
             },
         },

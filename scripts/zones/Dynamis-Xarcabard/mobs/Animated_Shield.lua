@@ -2,14 +2,11 @@
 -- Area: Dynamis - Xarcabard
 --  Mob: Animated Shield
 -----------------------------------
-local ID = require("scripts/zones/Dynamis-Xarcabard/IDs")
-require("scripts/globals/status")
-mixins = { require("scripts/mixins/animated_weapon") }
-mixinOptions = { item = xi.items.SUPERNAL_FRAGMENT }
+local ID = zones[xi.zone.DYNAMIS_XARCABARD]
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     target:showText(mob, ID.text.ANIMATED_SHIELD_DIALOG)
 end
 
@@ -23,6 +20,7 @@ end
 
 entity.onMobDeath = function(mob, player, optParams)
     player:showText(mob, ID.text.ANIMATED_SHIELD_DIALOG + 1)
+    xi.magian.onMobDeath(mob, player, optParams, set{ 4448 })
 end
 
 return entity

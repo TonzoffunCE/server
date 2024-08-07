@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Chocobo_Circuit
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CHOCOBO_CIRCUIT] =
@@ -24,6 +21,7 @@ zones[xi.zone.CHOCOBO_CIRCUIT] =
     },
     npc =
     {
+        RUNGAGA = GetFirstID('Rungaga'),
     },
 }
 

@@ -1,4 +1,4 @@
-local ID = require("scripts/zones/Tavnazian_Safehold/IDs")
+local ID = zones[xi.zone.TAVNAZIAN_SAFEHOLD]
 
 return {
     ['_0q1']             = { messageSpecial = ID.text.DOOR_IS_LOCKED_TIGHT },
@@ -14,6 +14,7 @@ return {
     ['Equette']          = { event = 162 },
     ['Evindigar']        = { event = 361 },
     ['Ferchinne']        = { event = 240 },
+    ['Frescheque']       = { event = 158 },
     ['Fouagine']         = { event = 338 },
     ['Geuselibel']       = { event = 328 },
     ['Guda']             = { event = 322 },

@@ -11,12 +11,6 @@
 -- Zubaba           : !pos 15 -27 18 242
 -- Thone Room Door  : !pos -111 -6 0 165
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WINDURST, xi.mission.id.windurst.THE_SHADOW_AWAITS)
 
@@ -138,7 +132,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 3 and
-                        player:getLocalVar('battlefieldWin') == 160
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.SHADOW_LORD_BATTLE
                     then
                         if
                             player:getCurrentMission(xi.mission.log_id.ZILART) ~= xi.mission.id.zilart.THE_NEW_FRONTIER and

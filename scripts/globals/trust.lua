@@ -1,19 +1,29 @@
 -----------------------------------
 -- Trust
 -----------------------------------
-require("scripts/globals/bcnm")
-require("scripts/globals/keyitems")
-require("scripts/globals/magic")
-require("scripts/globals/msg")
-require("scripts/globals/roe")
-require("scripts/globals/settings")
-require("scripts/globals/status")
+require('scripts/globals/magic')
+require('scripts/globals/roe')
 -----------------------------------
-
 xi = xi or {}
 xi.trust = xi.trust or {}
 
-xi.trust.message_offset =
+xi.trust.movementType =
+{
+    -- NOTE: If you need to add special movement types, add descending into the minus values.
+    --     : All of the positive values are taken for the ranged movement range.
+    --     : See trust_controller.cpp for more.
+    -- NOTE: You can use any positive value as a distance, and it will act as MID_RANGE or LONG_RANGE, but with the value you've provided.
+    --     : For example:
+    --     :     mob:setMobMod(xi.mobMod.TRUST_DISTANCE, 20)
+    --     : Will set the combat distance the trust tries to stick to to 20'
+    -- NOTE: If a Trust doesn't immediately sprint to a certain distance at the start of battle, it's probably NO_MOVE or MELEE.
+    NO_MOVE    = -1, -- Will stand still providing they're within casting distance of their master and target when the fight starts. Otherwise will reposition to be within 9.0' of both
+    MELEE      = 0,  -- Default: will continually reposition to stay within melee range of the target
+    MID_RANGE  = 6,  -- Will path at the start of battle to 6' away from the target, and try to stay at that distance
+    LONG_RANGE = 12, -- Will path at the start of battle to 12' away from the target, and try to stay at that distance
+}
+
+xi.trust.messageOffset =
 {
     SPAWN          = 1,
     TEAMWORK_1     = 4,
@@ -189,6 +199,17 @@ xi.trust.checkBattlefieldTrustCount = function(caster)
         local numPlayers       = battlefield:getPlayerCount()
         local numTrusts        = 0
 
+        -- RoV KI Battlefields are limited to LB5 fights which are restricted to
+        -- one participant which would cause the return to fail.  In this case,
+        -- set the maxParticipants value to 6 to allow summoning.
+
+        if
+            rovKIBattlefieldIDs[battlefield:getID()] and
+            caster:hasKeyItem(xi.ki.RHAPSODY_IN_UMBER)
+        then
+            maxParticipants = 6
+        end
+
         for _, entity in ipairs(participants) do
             local objType = entity:getObjType()
 
@@ -240,7 +261,7 @@ xi.trust.onTradeCipher = function(player, trade, csid, rovCs, arkAngelCs)
         not player:hasSpell(spellId)
     then
 
-        player:setLocalVar("TradingTrustCipher", spellId)
+        player:setLocalVar('TradingTrustCipher', spellId)
 
         -- TODO Blocking for ROV ciphers
         local rovBlock = false
@@ -263,7 +284,7 @@ xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
     end
 
     -- GMs can do what they want (as long as ENABLE_TRUST_CASTING is enabled)
-    if caster:getGMLevel() > 0 and caster:checkNameFlags(0x04000000) then
+    if caster:getGMLevel() > 0 and caster:getVisibleGMLevel() >= 3 then
         return 0
     end
 
@@ -315,14 +336,14 @@ xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
                 caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                 return -1
             -- Check not allowed trust combinations (Shantotto I vs Shantotto II)
-            elseif type(notAllowedTrustIds) == "number" then
+            elseif type(notAllowedTrustIds) == 'number' then
                 if member:getTrustID() == notAllowedTrustIds then
                     caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                     return -1
                 end
-            elseif type(notAllowedTrustIds) == "table" then
+            elseif type(notAllowedTrustIds) == 'table' then
                 for _, v in pairs(notAllowedTrustIds) do
-                    if type(v) == "number" then
+                    if type(v) == 'number' then
                         if member:getTrustID() == v then
                             caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                             return -1
@@ -343,11 +364,17 @@ xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
         return -1
     end
 
-    -- Some battlefields allow trusts after you get this ROV Key Item
+    -- Some battlefields allow trusts after you get this ROV Key Item, and this
+    -- rule should take precedence.  If it is not one of these, then fall back
+    -- to checking the battlefield's definitions.
     local casterBattlefieldID = caster:getBattlefieldID()
-    if
-        rovKIBattlefieldIDs[casterBattlefieldID] and
-        not caster:hasKeyItem(xi.ki.RHAPSODY_IN_UMBER)
+    if rovKIBattlefieldIDs[casterBattlefieldID] then
+        if not caster:hasKeyItem(xi.ki.RHAPSODY_IN_UMBER) then
+            return xi.msg.basic.TRUST_NO_CAST_TRUST
+        end
+    elseif
+        xi.battlefield.contents[casterBattlefieldID] and
+        not xi.battlefield.contents[casterBattlefieldID].allowTrusts
     then
         return xi.msg.basic.TRUST_NO_CAST_TRUST
     end
@@ -387,12 +414,12 @@ xi.trust.message = function(mob, messageOffset)
     local pageOffset = poolIDToMessagePageOffset[poolID]
 
     if pageOffset == nil then
-        print("trust.lua: pageOffset not set for Trust poolID: " .. poolID)
+        print('trust.lua: pageOffset not set for Trust poolID: ' .. poolID)
         return
     end
 
     if pageOffset > maxMessagePage then
-        print("trust.lua: maxMessagePage exceeded!")
+        print('trust.lua: maxMessagePage exceeded!')
         return
     end
 
@@ -420,14 +447,14 @@ xi.trust.teamworkMessage = function(mob, teamwork_messages)
         xi.trust.message(mob, messages[math.random(1, #messages)])
     else
         -- Defaults to regular spawn message
-        xi.trust.message(mob, xi.trust.message_offset.SPAWN)
+        xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
     end
 end
 
 -- For debugging and lining up teamwork messages
 xi.trust.dumpMessages = function(mob, pageOffset)
     for i = 0, 20 do
-        xi.trust.message(mob, pageOffset, i)
+        xi.trust.message(mob, pageOffset)
     end
 end
 

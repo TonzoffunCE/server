@@ -3,8 +3,7 @@
 -- Area: Nyzul Isle
 -- Info: Specified Mob Group
 -----------------------------------
-require('scripts/globals/status')
-require('scripts/globals/nyzul')
+mixins = { require('scripts/mixins/families/poroggo') }
 -----------------------------------
 local entity = {}
 

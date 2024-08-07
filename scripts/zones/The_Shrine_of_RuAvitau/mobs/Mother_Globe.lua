@@ -4,8 +4,7 @@
 -- TODO: Looked like pets had an additional effect: stun with an unknown proc rate
 -- TODO: "Links with Slave Globes, and Slave Globes link with Defenders. Defenders do not link with Slave Globes or Mother Globe."
 -----------------------------------
-local ID = require("scripts/zones/The_Shrine_of_RuAvitau/IDs")
-require("scripts/globals/status")
+local ID = zones[xi.zone.THE_SHRINE_OF_RUAVITAU]
 -----------------------------------
 local entity = {}
 
@@ -70,31 +69,45 @@ end
 
 -- spawn the slave and update any enmity
 local spawnSlaveGlobe = function(mg, slaveGlobe, spawnPos)
-    slaveGlobe:setSpawn(spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.rot)
-    slaveGlobe:spawn()
+    mg:entityAnimationPacket(xi.animationString.CAST_SUMMONER_START)
+    mg:timer(5000, function(mob)
+        mg:entityAnimationPacket(xi.animationString.CAST_SUMMONER_STOP)
+        slaveGlobe:setSpawn(spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.rot)
+        slaveGlobe:spawn()
+        if mg:isEngaged() then
+            slaveGlobe:updateEnmity(mg:getTarget())
+        end
 
-    if mg:isEngaged() then
-        slaveGlobe:updateEnmity(mg:getTarget())
-    end
+        local followTarget = mg
+        for _, slaveGlobeID in ipairs(slaveGlobes) do
+            local currentSlave = GetMobByID(slaveGlobeID)
+
+            local action = currentSlave:getCurrentAction()
+            if action ~= xi.act.NONE and action ~= xi.act.DEATH then
+                currentSlave:follow(followTarget, xi.followType.ROAM)
+                followTarget = currentSlave
+            end
+        end
+    end)
 end
 
 -- set the next spawn time, if it's at a max, set to zero
 -- zero helps to prevent insta spawning next slaves while
 -- in combat if at the start it had all 6 out already
 local setNextSpawnSlaveGlobe = function(mg, spawnCount, nowTime)
-    local nextSpawnTime = 35 -- 30 + 5 seconds for "cast time"
+    local nextSpawnTime = 35 -- 30 + 5 seconds for 'cast time'
 
     if spawnCount < #slaveGlobes then
-        mg:setLocalVar("nextSlaveSpawnTime", nowTime + nextSpawnTime)
+        mg:setLocalVar('nextSlaveSpawnTime', nowTime + nextSpawnTime)
     else
-        -- setting to zero prevents "insta" spawn on the 6th slaves death because slaveGlobePos
+        -- setting to zero prevents 'insta' spawn on the 6th slaves death because slaveGlobePos
         -- on death will check and set the next respawn time
-        mg:setLocalVar("nextSlaveSpawnTime", 0)
+        mg:setLocalVar('nextSlaveSpawnTime', 0)
     end
 end
 
 local trySpawnSlaveGlobe = function(mg, nowTime, spawnedSlaves, notSpawnedSlaves, validSlavePositions)
-    local nextSlaveSpawnTime = mg:getLocalVar("nextSlaveSpawnTime")
+    local nextSlaveSpawnTime = mg:getLocalVar('nextSlaveSpawnTime')
     local shouldSummonSlaveGlobe = nowTime > nextSlaveSpawnTime and #notSpawnedSlaves > 0
     local inCombat = mg:isEngaged()
     local combatHasNotRecentlyStarted = mg:getBattleTime() > 3
@@ -109,22 +122,8 @@ local trySpawnSlaveGlobe = function(mg, nowTime, spawnedSlaves, notSpawnedSlaves
     end
 end
 
-local handleSlaveGlobesRoam = function(mg, validSlavePositions)
-    local mgPos = mg:getPos()
-    local positionsIndex = 1
-
-    local spawnedSlaves, _ = getSlaves()
-
-    for _, slaveGlobe in ipairs(spawnedSlaves) do
-        local slaveGlobePos = validSlavePositions[positionsIndex]
-        positionsIndex = positionsIndex + 1
-        slaveGlobe:pathTo(slaveGlobePos.x, slaveGlobePos.y, slaveGlobePos.z)
-        slaveGlobe:setRotation(mgPos.rot)
-    end
-end
-
 entity.onMobSpawn = function(mob)
-    mob:setLocalVar("nextSlaveSpawnTime", os.time() + 30) -- spawn first 30s from now
+    mob:setLocalVar('nextSlaveSpawnTime', os.time() + 30) -- spawn first 30s from now
     mob:addStatusEffectEx(xi.effect.SHOCK_SPIKES, 0, 60, 0, 0) -- ~60 damage
     -- TODO: Effect can be stolen, giving a THF (Aura Steal) or BLU (Voracious Trunk) a 60 minute shock spikes effect (unknown potency).
     -- If effect is stolen, he will recast it instantly.
@@ -149,7 +148,6 @@ entity.onMobRoam = function(mob)
     local validSlavePositions = calculateValidSlaveGlobePositions(mob:getZone(), mob:getPos(), startingSpacingDistance)
 
     trySpawnSlaveGlobe(mob, os.time(), spawnedSlaves, notSpawnedSlaves, validSlavePositions)
-    handleSlaveGlobesRoam(mob, validSlavePositions)
 end
 
 entity.onAdditionalEffect = function(mob, target, damage)

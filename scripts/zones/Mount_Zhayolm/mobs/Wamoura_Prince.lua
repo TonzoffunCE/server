@@ -1,9 +1,8 @@
 -----------------------------------
 -- Area: Mount Zhayolm
 --   NM: Wamoura Prince
--- TODO: Damage resistances in streched and curled stances. Halting movement during stance change. Morph into Wamoura.
 -----------------------------------
-mixins = { require("scripts/mixins/families/wamouracampa") }
+mixins = { require('scripts/mixins/families/wamouracampa') }
 -----------------------------------
 local entity = {}
 

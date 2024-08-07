@@ -3,15 +3,8 @@
 -----------------------------------
 -- !addquest 8 164
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/abyssea')
-require('scripts/globals/keyitems')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.TO_PASTE_A_PEISTE)
+local quest = Quest:new(xi.questLog.ABYSSEA, xi.quest.id.abyssea.TO_PASTE_A_PEISTE)
 
 quest.reward = { }
 
@@ -19,9 +12,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.abyssea.getHeldTraverserStones(player) >= 1 and
-                player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) >= QUEST_ACCEPTED
+                player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) >= xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.KONSCHTAT_HIGHLANDS] =
@@ -44,7 +37,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and player:hasTitle(xi.title.KUKULKAN_DEFANGER)
+            return status == xi.questStatus.QUEST_ACCEPTED and player:hasTitle(xi.title.KUKULKAN_DEFANGER)
         end,
 
         [xi.zone.KONSCHTAT_HIGHLANDS] =
@@ -58,7 +51,7 @@ quest.sections =
 
             onEventUpdate =
             {
-                [1] = function(player, csid, option)
+                [1] = function(player, csid, option, npc)
                     if option == 1 then
                         player:updateEvent(xi.abyssea.getZoneKIReward(player))
                     end

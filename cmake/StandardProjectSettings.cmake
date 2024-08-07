@@ -1,8 +1,8 @@
 # Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
   set(CMAKE_BUILD_TYPE
-      RelWithDebInfo
+      "RelWithDebInfo"
       CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui, ccmake
   set_property(
@@ -15,8 +15,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" ON)
-
-if(ENABLE_IPO)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+if(ENABLE_IPO AND NOT CMAKE_BUILD_TYPE STREQUAL Debug)
   include(CheckIPOSupported)
   check_ipo_supported(
     RESULT
@@ -24,11 +24,12 @@ if(ENABLE_IPO)
     OUTPUT
     output)
   if(result)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
   else()
     message(STATUS "IPO is not supported: ${output}")
   endif()
 endif()
+message(STATUS "CMAKE_INTERPROCEDURAL_OPTIMIZATION: ${CMAKE_INTERPROCEDURAL_OPTIMIZATION} (this implies /GL or -flto)")
 
 # Snippet from GLM: https://github.com/g-truc/glm (MIT)
 # NOTE: fast-math was on by default before the CMake build refactoring!
@@ -59,13 +60,20 @@ if(MSVC)
         /Oy- # Frame-Pointer Omission
         /MP # Build with Multiple Processes
         /bigobj # Allow bigger .obj files, which we have from mainly the sol templating
+        /utf-8 # Treat source files as UTF-8. This is needed because of certain symbols inside fmtlib's code. u-second, etc.
     )
 
-    if(CMAKE_CONFIGURATION_TYPES STREQUAL Debug)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL /SAFESEH:NO")
+    if(CMAKE_BUILD_TYPE STREQUAL Debug)
+        # TODO: Where is this /Zi coming from?
+        # Command line warning D9025: overriding '/ZI' with '/Zi'
+        string(REPLACE "/Zi" "/ZI" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+        string(REPLACE "/Zi" "/ZI" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+        string(REPLACE "/Zi" "/ZI" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+        string(REPLACE "/Zi" "/ZI" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL /SAFESEH:NO /EDITANDCONTINUE")
         list(APPEND FLAGS_AND_DEFINES
-            # TODO: Restore old flag
-            # /ZI # Omit Default Library Name
+            /ZI # Omit Default Library Name
             /GR # Enable RTTI
         )
     else()
@@ -111,3 +119,14 @@ function(disable_lto target)
     target_compile_options(${target} PRIVATE -fno-lto)
     target_link_options(${target} PRIVATE -fno-lto)
 endfunction()
+
+# If we're on Unix and the system is 32-bit (void* is 4-bytes wide),
+# then there's a good chance we're compiling for Raspberry Pi.
+# Currently, CMake doesn't detect this properly and needs some help
+# to link libatomic.
+# Source: https://gitlab.kitware.com/cmake/cmake/-/issues/21174
+#
+# TODO: Use include(CheckCXXSourceCompiles) to make this check better.
+if(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+endif()

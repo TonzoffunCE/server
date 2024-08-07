@@ -11,20 +11,14 @@
 -- Cunegonde      : !pos -55.964 -0.15 -129.833 257
 -- Ndah Tolohjin  : !pos -86.808 0.001 -36.867 257
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
------------------------------------
-local easternAdoulinID = require('scripts/zones/Eastern_Adoulin/IDs')
+local easternAdoulinID = zones[xi.zone.EASTERN_ADOULIN]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.THE_LONGEST_WAY_ROUND)
+local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.THE_LONGEST_WAY_ROUND)
 
 quest.reward =
 {
-    fameArea = xi.quest.fame_area.ADOULIN,
+    fameArea = xi.fameArea.ADOULIN,
     xp       = 1000,
     bayld    = 500,
 }
@@ -60,7 +54,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getCurrentMission(xi.mission.log_id.SOA) >= xi.mission.id.soa.LIFE_ON_THE_FRONTIER
         end,
 
@@ -80,7 +74,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.EASTERN_ADOULIN] =

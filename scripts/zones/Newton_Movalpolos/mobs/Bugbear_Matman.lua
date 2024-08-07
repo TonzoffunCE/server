@@ -2,10 +2,13 @@
 -- Area: Newton Movalpolos
 --   NM: Bugbear Matman
 -----------------------------------
-local ID = require("scripts/zones/Newton_Movalpolos/IDs")
-require("scripts/globals/hunts")
+local ID = zones[xi.zone.NEWTON_MOVALPOLOS]
 -----------------------------------
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+end
 
 entity.onMobSpawn = function(mob)
     mob:addMod(xi.mod.REGAIN, 50)

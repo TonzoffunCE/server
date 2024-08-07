@@ -4,8 +4,7 @@
 -- Notes: Door blocked by Temple Guardian
 -- !pos -62 0 -99 159
 -----------------------------------
-local ID = require("scripts/zones/Temple_of_Uggalepih/IDs")
-require("scripts/globals/status")
+local ID = zones[xi.zone.TEMPLE_OF_UGGALEPIH]
 -----------------------------------
 local entity = {}
 
@@ -22,14 +21,12 @@ entity.onTrigger = function(player, npc)
     if guardian ~= nil and guardian:getHP() > 0 and guardian:getTarget() == nil then
         guardian:updateClaim(player)
     end
-
-    return 1
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

@@ -2,8 +2,6 @@
 -- Area: Sealions Den
 --  Mob: Mammet-22 Zeta
 -----------------------------------
-local oneToBeFeared = require("scripts/zones/Sealions_Den/bcnms/one_to_be_feared_helper")
------------------------------------
 local entity = {}
 
 entity.onMobInitialize = function(mob)
@@ -52,7 +50,7 @@ end
 
 entity.onMobFight = function(mob, target)
     -- Chages forms after 30-60 seconds randomly
-    local timeTracker = mob:getLocalVar("formTimeTracker")
+    local timeTracker = mob:getLocalVar('formTimeTracker')
     local currentTime = mob:getBattleTime()
     -- NOTE: Yellow Liquid applies xi.effect.FOOD to the Mammets
     local cannotChangeForm = mob:hasStatusEffect(xi.effect.FOOD)
@@ -88,7 +86,7 @@ entity.onMobFight = function(mob, target)
                 mob:setDamage(40)
             end,
         }
-        mob:setLocalVar("formTimeTracker", mob:getBattleTime() + math.random(30, 60))
+        mob:setLocalVar('formTimeTracker', mob:getBattleTime() + math.random(30, 60))
     end
 end
 
@@ -118,11 +116,9 @@ entity.onMobWeaponSkillPrepare = function(mob, target)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
-    oneToBeFeared.handleMammetDeath(mob, player, optParams)
 end
 
-entity.onEventFinish = function(player, csid, option)
-    oneToBeFeared.handleMammetBattleEnding(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

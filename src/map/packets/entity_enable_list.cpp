@@ -1,13 +1,13 @@
 ﻿#include "common/socket.h"
 
-#include "../entities/baseentity.h"
+#include "entities/baseentity.h"
 
 #include "entity_enable_list.h"
 
 CEntityEnableList::CEntityEnableList(const std::vector<uint32>& list)
 {
     this->setType(0x77);
-    this->setSize(0x110); // TODO: Verify
+    this->setSize(0x88);
 
     ref<uint32>(0x04) = 1;
 

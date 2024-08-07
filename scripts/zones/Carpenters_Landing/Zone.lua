@@ -2,10 +2,7 @@
 -- Zone: Carpenters_Landing (2)
 -----------------------------------
 local func = require('scripts/zones/Carpenters_Landing/globals')
-local ID = require('scripts/zones/Carpenters_Landing/IDs')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/helm')
+local ID = zones[xi.zone.CARPENTERS_LANDING]
 -----------------------------------
 local zoneObject = {}
 
@@ -17,7 +14,7 @@ zoneObject.onInitialize = function(zone)
     UpdateNMSpawnPoint(ID.mob.TEMPEST_TIGON)
     GetMobByID(ID.mob.TEMPEST_TIGON):setRespawnTime(math.random(900, 10800))
 
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
     func.herculesTreeOnGameHour()
 end
 
@@ -35,8 +32,8 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onGameHour = function(zone)
@@ -50,10 +47,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

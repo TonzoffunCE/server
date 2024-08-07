@@ -1,13 +1,8 @@
 -----------------------------------
 -- Zone: Yuhtunga_Jungle (123)
 -----------------------------------
-local ID = require('scripts/zones/Yuhtunga_Jungle/IDs')
+local ID = zones[xi.zone.YUHTUNGA_JUNGLE]
 require('scripts/quests/i_can_hear_a_rainbow')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
-require('scripts/globals/beastmentreasure')
 require('scripts/missions/amk/helpers')
 -----------------------------------
 local zoneObject = {}
@@ -19,18 +14,20 @@ end
 zoneObject.onInitialize = function(zone)
     xi.conq.setRegionalConquestOverseers(zone:getRegionID())
 
-    xi.helm.initZone(zone, xi.helm.type.HARVESTING)
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.HARVESTING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
 
     xi.bmt.updatePeddlestox(xi.zone.YUHTUNGA_JUNGLE, ID.npc.PEDDLESTOX)
+
+    GetMobByID(ID.mob.PYUU_THE_SPATEMAKER):setRespawnTime(math.random(5400, 7200))
 end
 
 zoneObject.onGameDay = function()
     xi.bmt.updatePeddlestox(xi.zone.YUHTUNGA_JUNGLE, ID.npc.PEDDLESTOX)
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

@@ -6,11 +6,6 @@
 -- Cid       : !pos -12 -12 1 237
 -- Iron Gate : !pos 612 132 774 32
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/missions')
-require('scripts/globals/utils')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.ONE_TO_BE_FEARED)
 
@@ -111,7 +106,7 @@ mission.sections =
 
                 [32001] = function(player, csid, option, npc)
                     if
-                        player:getLocalVar('battlefieldWin') == 992 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.ONE_TO_BE_FEARED and
                         mission:getVar(player, 'Status') == 3
                     then
                         -- While we could queue this, any disconnect would cause the player to have to

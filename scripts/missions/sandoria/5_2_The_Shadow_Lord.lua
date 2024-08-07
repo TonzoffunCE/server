@@ -10,15 +10,7 @@
 -- Door: Prince Royal's : !pos -38 -3 73 233
 -- Door: Great Hall     : !pos 0 -1 13 233
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
-local chateauID = require('scripts/zones/Chateau_dOraguille/IDs')
+local chateauID = zones[xi.zone.CHATEAU_DORAGUILLE]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.THE_SHADOW_LORD)
@@ -134,7 +126,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 3 and
-                        player:getLocalVar('battlefieldWin') == 160
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.SHADOW_LORD_BATTLE
                     then
                         if
                             player:getCurrentMission(xi.mission.log_id.ZILART) ~= xi.mission.id.zilart.THE_NEW_FRONTIER and

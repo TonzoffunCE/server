@@ -28,11 +28,9 @@
 
 #include "item_usable.h"
 
-#include "../latent_effect.h"
-#include "../modifier.h"
-#include "../status_effect.h"
-
-// типы событий, в которых участвует логика предмета
+#include "latent_effect.h"
+#include "modifier.h"
+#include "status_effect.h"
 
 enum SCRIPTTYPE : uint16
 {
@@ -76,6 +74,7 @@ public:
     uint8  getShieldSize() const;
     uint16 getEquipSlotId() const;
     uint16 getRemoveSlotId() const;
+    uint16 getRemoveSlotLookId() const;
     uint8  getShieldAbsorption() const;
     int16  getModifier(Mod mod) const;
     uint8  getSlotType() const;
@@ -84,6 +83,7 @@ public:
     uint8  getSuperiorLevel();
 
     bool IsShield() const;
+    bool isEquippableByRace(uint8 race) const;
 
     void setReqLvl(uint8 lvl);
     void setILvl(uint8 lvl);
@@ -93,6 +93,7 @@ public:
     void setScriptType(uint16 isScripted);
     void setEquipSlotId(uint16 equipSlot);
     void setRemoveSlotId(uint16 removSlot);
+    void setRemoveSlotLookId(uint16 removSlotLook);
     void setAugment(uint8 slot, uint16 type, uint8 value);
     void setTrialNumber(uint16);
     void setSuperiorLevel(uint8 level);
@@ -116,9 +117,9 @@ public:
     bool delModifier(Mod mod, int16 modValue);
     bool delPetModifier(Mod mod, PetModType petType, int16 modValue);
 
-    std::vector<CModifier>    modList;    // список модификаторов
-    std::vector<CPetModifier> petModList; // mod list for pets
-    std::vector<itemLatent>   latentList; // contains latents
+    std::vector<CModifier>    modList;
+    std::vector<CPetModifier> petModList;
+    std::vector<itemLatent>   latentList;
 
 private:
     uint8  m_reqLvl;
@@ -130,6 +131,7 @@ private:
     uint8  m_absorption;
     uint16 m_equipSlotID;
     uint16 m_removeSlotID;
+    uint16 m_removeSlotLookID;
     uint8  m_superiorLevel;
 
     void SetAugmentMod(uint16 type, uint8 value);

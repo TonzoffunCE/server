@@ -21,21 +21,21 @@
 
 #include <cstring>
 
-#include "../ai/ai_container.h"
-#include "../ai/controllers/pet_controller.h"
-#include "../ai/helpers/pathfind.h"
-#include "../ai/helpers/targetfind.h"
-#include "../ai/states/ability_state.h"
-#include "../ai/states/petskill_state.h"
-#include "../mob_modifier.h"
-#include "../mob_spell_container.h"
-#include "../mob_spell_list.h"
-#include "../packets/entity_update.h"
-#include "../packets/pet_sync.h"
-#include "../status_effect_container.h"
-#include "../utils/battleutils.h"
-#include "../utils/mobutils.h"
-#include "../utils/petutils.h"
+#include "ai/ai_container.h"
+#include "ai/controllers/pet_controller.h"
+#include "ai/helpers/pathfind.h"
+#include "ai/helpers/targetfind.h"
+#include "ai/states/ability_state.h"
+#include "ai/states/petskill_state.h"
+#include "mob_modifier.h"
+#include "mob_spell_container.h"
+#include "mob_spell_list.h"
+#include "packets/entity_update.h"
+#include "packets/pet_sync.h"
+#include "status_effect_container.h"
+#include "utils/battleutils.h"
+#include "utils/mobutils.h"
+#include "utils/petutils.h"
 
 #include "common/utils.h"
 #include "petentity.h"
@@ -48,6 +48,7 @@ CPetEntity::CPetEntity(PET_TYPE petType)
 , m_jugSpawnTime(time_point::min())
 , m_jugDuration(duration::min())
 {
+    TracyZoneScoped;
     objtype                     = TYPE_PET;
     m_EcoSystem                 = ECOSYSTEM::UNCLASSIFIED;
     allegiance                  = ALLEGIANCE_TYPE::PLAYER;
@@ -59,7 +60,10 @@ CPetEntity::CPetEntity(PET_TYPE petType)
     PAI = std::make_unique<CAIContainer>(this, std::make_unique<CPathFind>(this), std::make_unique<CPetController>(this), std::make_unique<CTargetFind>(this));
 }
 
-CPetEntity::~CPetEntity() = default;
+CPetEntity::~CPetEntity()
+{
+    TracyZoneScoped;
+}
 
 PET_TYPE CPetEntity::getPetType()
 {
@@ -83,7 +87,11 @@ bool CPetEntity::isBstPet()
 
 int32 CPetEntity::getJugSpawnTime()
 {
-    XI_DEBUG_BREAK_IF(m_PetType != PET_TYPE::JUG_PET)
+    if (m_PetType != PET_TYPE::JUG_PET)
+    {
+        ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
+        return 0;
+    }
 
     const auto epoch = m_jugSpawnTime.time_since_epoch();
     return static_cast<int32>(std::chrono::duration_cast<std::chrono::seconds>(epoch).count());
@@ -91,21 +99,33 @@ int32 CPetEntity::getJugSpawnTime()
 
 void CPetEntity::setJugSpawnTime(int32 spawnTime)
 {
-    XI_DEBUG_BREAK_IF(m_PetType != PET_TYPE::JUG_PET);
+    if (m_PetType != PET_TYPE::JUG_PET)
+    {
+        ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
+        return;
+    }
 
     m_jugSpawnTime = std::chrono::system_clock::time_point(std::chrono::duration<int>(spawnTime));
 }
 
 int32 CPetEntity::getJugDuration()
 {
-    XI_DEBUG_BREAK_IF(m_PetType != PET_TYPE::JUG_PET);
+    if (m_PetType != PET_TYPE::JUG_PET)
+    {
+        ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
+        return 0;
+    }
 
     return static_cast<int32>(std::chrono::duration_cast<std::chrono::seconds>(m_jugDuration).count());
 }
 
 void CPetEntity::setJugDuration(int32 seconds)
 {
-    XI_DEBUG_BREAK_IF(m_PetType != PET_TYPE::JUG_PET);
+    if (m_PetType != PET_TYPE::JUG_PET)
+    {
+        ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
+        return;
+    }
 
     m_jugDuration = std::chrono::seconds(seconds);
 }
@@ -146,7 +166,11 @@ const std::string CPetEntity::GetScriptName()
 
 WYVERN_TYPE CPetEntity::getWyvernType()
 {
-    XI_DEBUG_BREAK_IF(PMaster == nullptr);
+    if (PMaster == nullptr)
+    {
+        ShowWarning("PMaster is null.");
+        return WYVERN_TYPE::NONE;
+    }
 
     switch (PMaster->GetSJob())
     {
@@ -271,7 +295,11 @@ bool CPetEntity::shouldDespawn(time_point tick)
 
 void CPetEntity::loadPetZoningInfo()
 {
-    XI_DEBUG_BREAK_IF(!PAI->IsSpawned())
+    if (!PAI->IsSpawned())
+    {
+        ShowWarning("Attempt to load info without Pet spawned.");
+        return;
+    }
 
     if (auto* master = dynamic_cast<CCharEntity*>(PMaster))
     {
@@ -293,7 +321,7 @@ void CPetEntity::OnAbility(CAbilityState& state, action_t& action)
     auto* PTarget  = static_cast<CBattleEntity*>(state.GetTarget());
 
     std::unique_ptr<CBasicPacket> errMsg;
-    if (IsValidTarget(PTarget->targid, PAbility->getValidTarget(), errMsg))
+    if (PTarget && IsValidTarget(PTarget->targid, PAbility->getValidTarget(), errMsg))
     {
         if (this != PTarget && distance(this->loc.p, PTarget->loc.p) > PAbility->getRange())
         {
@@ -337,6 +365,18 @@ void CPetEntity::OnAbility(CAbilityState& state, action_t& action)
             actionTarget.param     = -value;
         }
     }
+    else // Can't target anything, just cancel the animation.
+    {
+        action.actiontype         = ACTION_MOBABILITY_INTERRUPT;
+        action.actionid           = 28787; // Some hardcoded magic for interrupts
+        actionList_t& actionList  = action.getNewActionList();
+        actionList.ActionTargetID = id;
+
+        actionTarget_t& actionTarget = actionList.getNewActionTarget();
+        actionTarget.animation       = 0x1FC;
+        actionTarget.messageID       = 0;
+        actionTarget.reaction        = REACTION::ABILITY | REACTION::HIT;
+    }
 }
 
 bool CPetEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
@@ -346,6 +386,23 @@ bool CPetEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
         return false;
     }
     return CMobEntity::ValidTarget(PInitiator, targetFlags);
+}
+
+bool CPetEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket>& errMsg)
+{
+    // prevent pets from attacking mobs that the PC master does not own
+    if (this->PMaster)
+    {
+        auto* PChar = dynamic_cast<CCharEntity*>(this->PMaster);
+        if (PChar && !PChar->IsMobOwner(PTarget))
+        {
+            errMsg = std::make_unique<CMessageBasicPacket>(this, PTarget, 0, 0, MSGBASIC_ALREADY_CLAIMED);
+            PAI->Disengage();
+            return false;
+        }
+    }
+
+    return CBattleEntity::CanAttack(PTarget, errMsg);
 }
 
 void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
@@ -383,6 +440,11 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
         findFlags |= FINDFLAGS_IGNORE_BATTLEID;
     }
 
+    if ((PSkill->getValidTargets() & TARGET_PLAYER_DEAD) == TARGET_PLAYER_DEAD)
+    {
+        findFlags |= FINDFLAGS_DEAD;
+    }
+
     action.id         = id;
     action.actiontype = (ACTIONTYPE)PSkill->getSkillFinishCategory();
     action.actionid   = PSkill->getID();
@@ -391,12 +453,12 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
     {
         if (PSkill->isAoE())
         {
-            PAI->TargetFind->findWithinArea(PTarget, static_cast<AOE_RADIUS>(PSkill->getAoe()), PSkill->getRadius(), findFlags);
+            PAI->TargetFind->findWithinArea(PTarget, static_cast<AOE_RADIUS>(PSkill->getAoe()), PSkill->getRadius(), findFlags, PSkill->getValidTargets());
         }
         else if (PSkill->isConal())
         {
             float angle = 45.0f;
-            PAI->TargetFind->findWithinCone(PTarget, distance, angle, findFlags);
+            PAI->TargetFind->findWithinCone(PTarget, distance, angle, findFlags, PSkill->getValidTargets());
         }
         else
         {
@@ -409,7 +471,7 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
                 }
             }
 
-            PAI->TargetFind->findSingleTarget(PTarget, findFlags);
+            PAI->TargetFind->findSingleTarget(PTarget, findFlags, PSkill->getValidTargets());
         }
     }
     else // Out of range
@@ -444,6 +506,7 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
     }
 
     PSkill->setTotalTargets(targets);
+    PSkill->setPrimaryTargetID(PTarget->id);
     PSkill->setTP(state.GetSpentTP());
     PSkill->setHPP(GetHPP());
 
@@ -551,7 +614,12 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
                 first = false;
             }
         }
-        PTargetFound->StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DETECTABLE);
+
+        if (PSkill->getValidTargets() & TARGET_ENEMY)
+        {
+            PTargetFound->StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DETECTABLE);
+        }
+
         if (PTargetFound->isDead())
         {
             battleutils::ClaimMob(PTargetFound, this);

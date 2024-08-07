@@ -11,15 +11,8 @@
 -- Heruze-Moruze    : !pos -56 -3 36 231
 -- Kasaroro         : !pos -72 -3 34 231
 -- Patt-Pott        : !pos 23 -17 42 237
-require('scripts/globals/interaction/mission')
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
 -----------------------------------
-local northernSandoriaID = require('scripts/zones/Northern_San_dOria/IDs')
+local northernSandoriaID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WINDURST, xi.mission.id.windurst.THE_THREE_KINGDOMS)
@@ -113,9 +106,13 @@ mission.sections =
                     local missionStatus = player:getMissionStatus(mission.areaId)
 
                     if missionStatus == 0 then
-                        local needsSemihTrust = (not player:hasSpell(940) and not player:findItem(xi.items.CIPHER_OF_SEMIHS_ALTER_EGO)) and 1 or 0
+                        if xi.settings.main.ENABLE_TRUST_QUESTS == 1 then
+                            local needsSemihTrust = (not player:hasSpell(xi.magic.spell.SEMIH_LAFIHNA) and not player:findItem(xi.item.CIPHER_OF_SEMIHS_ALTER_EGO)) and 1 or 0
 
-                        return mission:progressEvent(95, 0, 0, 0, xi.ki.LETTER_TO_THE_CONSULS_WINDURST, 0, 0, 0, needsSemihTrust)
+                            return mission:progressEvent(95, 0, 0, 0, xi.ki.LETTER_TO_THE_CONSULS_WINDURST, 0, 0, 0, needsSemihTrust)
+                        else
+                            return mission:progressEvent(95)
+                        end
                     elseif missionStatus == 11 then
                         return mission:progressEvent(101, 0, 0, xi.ki.ADVENTURERS_CERTIFICATE)
                     else
@@ -131,10 +128,11 @@ mission.sections =
                     npcUtil.giveKeyItem(player, xi.ki.LETTER_TO_THE_CONSULS_WINDURST)
 
                     if
-                        not player:hasSpell(940) and
-                        not player:findItem(xi.items.CIPHER_OF_SEMIHS_ALTER_EGO)
+                        xi.settings.main.ENABLE_TRUST_QUESTS == 1 and
+                        not player:hasSpell(xi.magic.spell.SEMIH_LAFIHNA) and
+                        not player:findItem(xi.item.CIPHER_OF_SEMIHS_ALTER_EGO)
                     then
-                        npcUtil.giveItem(player, xi.items.CIPHER_OF_SEMIHS_ALTER_EGO)
+                        npcUtil.giveItem(player, xi.item.CIPHER_OF_SEMIHS_ALTER_EGO)
                     end
                 end,
 

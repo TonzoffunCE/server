@@ -3,9 +3,7 @@
 --  NPC: Vattian
 -- Kuzotz Regional Merchant
 -----------------------------------
-local ID = require("scripts/zones/Port_Bastok/IDs")
-require("scripts/globals/conquest")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.PORT_BASTOK]
 -----------------------------------
 local entity = {}
 
@@ -24,14 +22,14 @@ entity.onTrigger = function(player, npc)
         }
 
         player:showText(npc, ID.text.VATTIAN_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.BASTOK)
+        xi.shop.general(player, stock, xi.fameArea.BASTOK)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

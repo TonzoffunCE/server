@@ -3,16 +3,21 @@
 --  Mob: Demon Pawn
 -- Note: PH for Baronet Romwe
 -----------------------------------
-local ID = require("scripts/zones/Castle_Zvahl_Keep/IDs")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.CASTLE_ZVAHL_KEEP]
 -----------------------------------
 local entity = {}
+
+local baronetPHTable =
+{
+    [ID.mob.BARONET_ROMWE - 2] = ID.mob.BARONET_ROMWE, -- -317.070 -52.125 14.052
+    [ID.mob.BARONET_ROMWE - 1] = ID.mob.BARONET_ROMWE, -- -335.444 -52.125 15.148
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.BARONET_ROMWE_PH, 10, math.random(3600, 28800)) -- 1 to 8 hours
+    xi.mob.phOnDespawn(mob, baronetPHTable, 10, 3600) -- 1 hour
 end
 
 return entity

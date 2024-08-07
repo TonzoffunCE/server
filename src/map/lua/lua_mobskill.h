@@ -51,7 +51,14 @@ public:
     bool   hasMissMsg();
     void   setMsg(uint16 message);
     uint16 getMsg();
+    auto   getTargets() -> sol::table;
     uint16 getTotalTargets();
+    uint32 getPrimaryTargetID();
+
+    bool operator==(const CLuaMobSkill& other) const
+    {
+        return this->m_PLuaMobSkill == other.m_PLuaMobSkill;
+    }
 
     static void Register();
 };

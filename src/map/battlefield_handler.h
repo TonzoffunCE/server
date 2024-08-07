@@ -17,8 +17,8 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #ifndef _CBATTLEFIELDHANDLER_H
 #define _CBATTLEFIELDHANDLER_H
 
-#include "../common/cbasetypes.h"
-#include "../common/mmo.h"
+#include "common/cbasetypes.h"
+#include "common/mmo.h"
 
 #include <map>
 #include <memory>
@@ -55,7 +55,6 @@ public:
     uint8         RegisterBattlefield(CCharEntity* PChar, const BattlefieldRegistration& registration); // attempts to register or load battlefield, returns BATTLEFIELD_RETURN_CODE
     bool          RemoveFromBattlefield(CBaseEntity* PEntity, CBattlefield* PBattlefield = nullptr, uint8 leavecode = 3);
     bool          IsRegistered(CCharEntity* PChar);
-    bool          IsEntered(CCharEntity* PChar);
     bool          ReachedMaxCapacity(int battlefieldId = -1) const;
     uint8         MaxBattlefieldAreas() const;
     void          addOrphanedPlayer(CCharEntity* PChar);

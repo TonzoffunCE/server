@@ -3,8 +3,7 @@
 --  NPC: Ryan
 -- Standard Merchant NPC
 -----------------------------------
-local ID = require("scripts/zones/Port_Windurst/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.PORT_WINDURST]
 -----------------------------------
 local entity = {}
 
@@ -32,13 +31,13 @@ entity.onTrigger = function(player, npc)
     }
 
     player:showText(npc, ID.text.RYAN_SHOP_DIALOG)
-    xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+    xi.shop.general(player, stock, xi.fameArea.WINDURST)
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

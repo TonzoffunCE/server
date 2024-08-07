@@ -1,14 +1,15 @@
 # add_subdirectory(lua) # Handled globally
-# add_subdirectory(mysql) # Handled globally
+# add_subdirectory(mariadb) # Handled globally
+# add_subdirectory(mariadbcpp) # Handled globally
 # add_subdirectory(zmq) # Handled globally
-
+# add_subdirectory(openssl) # Handled globally
 add_subdirectory(concurrentqueue)
 add_subdirectory(sol)
 
 option(TRACY_ENABLE "Enable Tracy profiling." OFF)
 
 # Also handle close flags:
-if (ENABLE_TRACY OR TRACY_ENABLED OR TRACY)
+if(ENABLE_TRACY OR TRACY_ENABLED OR TRACY)
     set(TRACY_ENABLE ON)
 endif()
 
@@ -17,7 +18,7 @@ message(STATUS "TRACY_ENABLE: ${TRACY_ENABLE}")
 # CPM Modules
 if(TRACY_ENABLE)
     # Tracy version tag, without the leading 'v'
-    set(TRACY_VERSION 0.9)
+    set(TRACY_VERSION 0.10)
 
     # Download client library
     CPMAddPackage(
@@ -34,7 +35,7 @@ if(TRACY_ENABLE)
     )
 
     # Download Win32 server executables
-    if (MSVC)
+    if(MSVC)
         message(STATUS "Downloading Tracy client")
         file(DOWNLOAD
             https://github.com/wolfpld/tracy/releases/download/v${TRACY_VERSION}/Tracy-${TRACY_VERSION}.7z
@@ -59,21 +60,25 @@ if(TRACY_ENABLE)
     endif()
 endif(TRACY_ENABLE)
 
-# NOTE: We are not using the latest versions of spdlog, since the
-#     : version of fmt it is bundled with deprecated some arg mapping
-#     : that we use in a lot of places (formatting enums as ints and
-#     : formatting non-void pointers).
+CPMAddPackage(
+    NAME fmt
+    GITHUB_REPOSITORY fmtlib/fmt
+    GIT_TAG 10.1.1
+) # defines: fmt::fmt
+
 CPMAddPackage(
     NAME spdlog
     GITHUB_REPOSITORY gabime/spdlog
-    GIT_TAG v1.9.2
+    GIT_TAG v1.12.0
+    OPTIONS
+        "SPDLOG_ENABLE_PCH ON"
+        "SPDLOG_FMT_EXTERNAL ON"
 ) # defines: spdlog
 
-# NOTE: Using the 'release-2.0' branch
 CPMAddPackage(
     NAME recastnavigation
     GITHUB_REPOSITORY recastnavigation/recastnavigation
-    GIT_TAG 67c36bda750f36b2b4152db57a23170ed7a0683c
+    GIT_TAG cd898904b72a300011fbb24d578620bafa08ef2c
     OPTIONS
         "RECASTNAVIGATION_DEMO OFF"
         "RECASTNAVIGATION_TESTS OFF"
@@ -106,7 +111,7 @@ endif()
 CPMAddPackage(
     NAME efsw
     GITHUB_REPOSITORY SpartanJ/efsw
-    GIT_TAG 74ca09bff89bc8de1f7b8bf3faaa6275ce23b4c5
+    GIT_TAG 341934765471e4074e90bb5205ff4a65c16499c6
     OPTIONS
         "VERBOSE OFF"
         "NO_ATOMICS OFF"
@@ -122,22 +127,117 @@ CPMAddPackage(
     GIT_TAG 5332bbd46dcba5f028a844795cc0931e9f2ffdf4
 ) # defines: jthread-lite
 
+# TODO: std::expected lands in C++23. Remove this once all compilers for all platforms implement.
+CPMAddPackage(
+    NAME expected-lite
+    GITHUB_REPOSITORY martinmoene/expected-lite
+    GIT_TAG 45a54fac224e5aae5f8e70bb1c2423181ae554da
+) # defines: expected-lite
+
 CPMAddPackage(
     NAME cpp-httplib
     GITHUB_REPOSITORY yhirose/cpp-httplib
-    GIT_TAG v0.11.3
+    GIT_TAG v0.15.3
 ) # defines: httplib::httplib
 
 CPMAddPackage(
     NAME json
     GITHUB_REPOSITORY nlohmann/json
-    GIT_TAG v3.11.2
+    GIT_TAG 254395e5f7731b5595e7c11ac4b929c923582114
 ) # defines: nlohmann_json::nlohmann_json
 
+CPMAddPackage(
+    NAME pcg-cpp
+    GITHUB_REPOSITORY imneme/pcg-cpp
+    GIT_TAG 428802d1a5634f96bcd0705fab379ff0113bcf13
+) # defines: pcg-cpp
+if(pcg-cpp_ADDED) # pcg-cpp does not include cmake
+    add_library(pcg-cpp INTERFACE)
+    target_include_directories(pcg-cpp SYSTEM INTERFACE ${pcg-cpp_SOURCE_DIR}/include/)
+endif()
+
+CPMAddPackage(
+    NAME asio
+    VERSION 1.28.0
+    GITHUB_REPOSITORY chriskohlhoff/asio
+    GIT_TAG asio-1-28-0 # asio uses non-standard version tag, we must specify GIT_TAG
+) #defines asio
+
+# ASIO doesn't use CMake, we have to configure it manually. Extra notes for using on Windows:
+#
+# If _WIN32_WINNT is not set, ASIO assumes _WIN32_WINNT=0x0501, i.e. Windows XP target, which is
+# definitely not the platform which most users target.
+if(asio_ADDED)
+    add_library(asio INTERFACE)
+
+    target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
+
+    target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
+
+    target_link_libraries(asio INTERFACE Threads::Threads)
+
+    if(WIN32)
+        # macro see @ https://stackoverflow.com/a/40217291/1746503
+        macro(get_win32_winnt version)
+            if(CMAKE_SYSTEM_VERSION)
+                set(ver ${CMAKE_SYSTEM_VERSION})
+                string(REGEX MATCH "^([0-9]+).([0-9])" ver ${ver})
+                string(REGEX MATCH "^([0-9]+)" verMajor ${ver})
+
+                # Check for Windows 10, b/c we'll need to convert to hex 'A'.
+                if("${verMajor}" MATCHES "10")
+                    set(verMajor "A")
+                    string(REGEX REPLACE "^([0-9]+)" ${verMajor} ver ${ver})
+                endif("${verMajor}" MATCHES "10")
+
+                # Remove all remaining '.' characters.
+                string(REPLACE "." "" ver ${ver})
+
+                # Prepend each digit with a zero.
+                string(REGEX REPLACE "([0-9A-Z])" "0\\1" ver ${ver})
+                set(${version} "0x${ver}")
+            endif()
+        endmacro()
+
+        if(NOT DEFINED _WIN32_WINNT)
+            get_win32_winnt(ver)
+            set(_WIN32_WINNT ${ver})
+        endif()
+
+        message(STATUS "Set _WIN32_WINNET=${_WIN32_WINNT}")
+
+        target_compile_definitions(asio INTERFACE _WIN32_WINNT=${_WIN32_WINNT})
+    endif()
+endif()
+
+CPMAddPackage(
+    NAME bcrypt
+    GITHUB_REPOSITORY zach2good/libbcrypt
+    GIT_TAG fb50b847ae760f16ab84a367452027b246df13e1
+    DOWNLOAD_ONLY ON
+) # defines: bcrypt
+if(bcrypt_ADDED) # bcrypt's cmake isn't suitable for us
+    add_library(bcrypt
+        STATIC
+            ${bcrypt_SOURCE_DIR}/src/bcrypt.c
+            ${bcrypt_SOURCE_DIR}/src/crypt_blowfish.c
+            ${bcrypt_SOURCE_DIR}/src/crypt_gensalt.c
+            ${bcrypt_SOURCE_DIR}/src/wrapper.c
+            ${bcrypt_SOURCE_DIR}/src/x86.S
+    )
+    target_include_directories(bcrypt
+        SYSTEM INTERFACE
+            ${bcrypt_SOURCE_DIR}/include/
+            $<$<PLATFORM_ID:Linux>:${bcrypt_SOURCE_DIR}/include/bcrypt/>
+    )
+endif()
+
 set(EXTERNAL_LIBS
+    fmt::fmt
     spdlog
     concurrentqueue
     mariadbclient
+    mariadbcpp
     RecastNavigation::Recast
     RecastNavigation::Detour
     fast_obj
@@ -146,19 +246,24 @@ set(EXTERNAL_LIBS
     task_system
     efsw
     jthread-lite
+    expected-lite
     httplib::httplib
     nlohmann_json::nlohmann_json
+    pcg-cpp
+    asio
+    bcrypt
 )
 
-if (WIN32)
-    #add wepoll for epoll support on windows
+if(WIN32)
+    # add wepoll for epoll support on windows
     add_subdirectory(wepoll)
 
     list(APPEND EXTERNAL_LIBS
         wepoll
     )
+
 # backwards needs these to add to linker
-elseif (APPLE)
+elseif(APPLE)
     # MacOS has bfd built in clang
     list(APPEND EXTERNAL_LIBS
         dl

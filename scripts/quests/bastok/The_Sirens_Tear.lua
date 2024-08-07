@@ -8,20 +8,13 @@
 -- Echo Hawk   : !pos -0.965 5.999 -15.567 234
 -- qm1 (moves) : !pos 309.6 2.6 324 106
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_SIRENS_TEAR)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.THE_SIRENS_TEAR)
 
 quest.reward =
 {
     fame = 120,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     gil = 150,
     title = xi.title.TEARJERKER,
 }
@@ -31,7 +24,7 @@ quest.sections =
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -51,7 +44,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -79,7 +72,7 @@ quest.sections =
     -- Section: Quest completed
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -89,7 +82,7 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if
                         quest:getVar(player, 'Prog') < 2 and
-                        not player:findItem(xi.items.SIRENS_TEAR)
+                        not player:findItem(xi.item.SIRENS_TEAR)
                     then
                         return quest:progressEvent(19)
                     end
@@ -108,7 +101,7 @@ quest.sections =
     -- Section accepted or completed
     {
         check = function(player, status, vars)
-            return status ~= QUEST_AVAILABLE
+            return status ~= xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -116,7 +109,7 @@ quest.sections =
             ['Wahid'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.SIRENS_TEAR) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.SIRENS_TEAR) then
                         return quest:progressEvent(82)
                     end
                 end,

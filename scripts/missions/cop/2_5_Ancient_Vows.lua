@@ -5,12 +5,6 @@
 -- !addmission 6 248
 -- Dilapidated Gate : !pos -259 -30 276 25
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.ANCIENT_VOWS)
 
@@ -76,7 +70,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         mission:getVar(player, 'Status') == 2 and
-                        player:getLocalVar('battlefieldWin') == 960
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.ANCIENT_VOWS
                     then
                         mission:complete(player)
                         player:setPos(694, -5.5, -619, 74, 107) -- South Gustaberg

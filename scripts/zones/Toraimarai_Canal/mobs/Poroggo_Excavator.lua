@@ -2,7 +2,7 @@
 -- Area: Toraimarai Canal
 --  Mob: Poroggo Excavator
 -----------------------------------
-require("scripts/globals/regimes")
+mixins = { require('scripts/mixins/families/poroggo') }
 -----------------------------------
 local entity = {}
 

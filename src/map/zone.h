@@ -25,6 +25,7 @@
 #include "common/cbasetypes.h"
 #include "common/mmo.h"
 #include "common/taskmgr.h"
+#include "common/vana_time.h"
 
 #include <list>
 #include <map>
@@ -36,14 +37,12 @@
 #include "navmesh.h"
 #include "packets/weather.h"
 #include "trigger_area.h"
-#include "vana_time.h"
 
 enum ZONEID : uint16
 {
     // Note: "residential zones" aren't really zones of their own.
     // It's more of a sub zone - the dats for messages and entities will all be from the zone you entered from.
-    ZONE_RESIDENTIAL_AREA = 0, // Old Tech Demonstration zone from pre-release (aka "the monorail place")
-                               // The Above should NOT be labeled "RESIDENTIAL_AREA"
+    ZONE_MONORAIL_PRE_RELEASE           = 0, // Old Tech Demonstration zone from pre-release (aka "the monorail place")
     ZONE_PHANAUET_CHANNEL               = 1,
     ZONE_CARPENTERS_LANDING             = 2,
     ZONE_MANACLIPPER                    = 3,
@@ -232,7 +231,7 @@ enum ZONEID : uint16
     ZONE_DYNAMIS_BASTOK                 = 186,
     ZONE_DYNAMIS_WINDURST               = 187,
     ZONE_DYNAMIS_JEUNO                  = 188,
-    ZONE_189                            = 189,
+    ZONE_OUTER_RAKAZNAR_U3              = 189,
     ZONE_KING_RANPERRES_TOMB            = 190,
     ZONE_DANGRUF_WADI                   = 191,
     ZONE_INNER_HORUTOTO_RUINS           = 192,
@@ -342,8 +341,20 @@ enum ZONEID : uint16
     ZONE_DYNAMIS_WINDURST_D             = 296,
     ZONE_DYNAMIS_JEUNO_D                = 297,
     ZONE_WALK_OF_ECHOES_P1              = 298,
-    MAX_ZONEID                          = 299,
+    ZONE_GWORA_THRONE_ROOM              = 299,
+    MAX_ZONEID                          = 300,
 };
+DECLARE_FORMAT_AS_UNDERLYING(ZONEID);
+
+enum NATION_TYPE : uint8
+{
+    NATION_SANDORIA = 0x00,
+    NATION_BASTOK   = 0x01,
+    NATION_WINDURST = 0x02,
+    NATION_BEASTMEN = 0x03,
+    NATION_NEUTRAL  = 0xFF,
+};
+DECLARE_FORMAT_AS_UNDERLYING(NATION_TYPE);
 
 enum class REGION_TYPE : uint8
 {
@@ -396,6 +407,7 @@ enum class REGION_TYPE : uint8
 
     UNKNOWN = 255
 };
+DECLARE_FORMAT_AS_UNDERLYING(REGION_TYPE);
 
 enum class CONTINENT_TYPE : uint8
 {
@@ -404,17 +416,22 @@ enum class CONTINENT_TYPE : uint8
     THE_SHADOWREIGN_ERA    = 3,
     OTHER_AREAS            = 4
 };
+DECLARE_FORMAT_AS_UNDERLYING(CONTINENT_TYPE);
 
-enum class ZONE_TYPE : uint8
+enum ZONE_TYPE : uint16
 {
-    NONE              = 0,
-    CITY              = 1,
-    OUTDOORS          = 2,
-    DUNGEON           = 3,
-    BATTLEFIELD       = 4,
-    DYNAMIS           = 5,
-    DUNGEON_INSTANCED = 6,
+    UNKNOWN   = 0x0000,
+    CITY      = 0x0001,
+    OUTDOORS  = 0x0002,
+    DUNGEON   = 0x0004,
+    SIGNET    = 0x0008,
+    SANCTION  = 0x0010, // 16
+    SIGIL     = 0x0020, // 32
+    IONIS     = 0x0040, // 64
+    DYNAMIS   = 0x0080, // 128
+    INSTANCED = 0x0100, // 256
 };
+DECLARE_FORMAT_AS_UNDERLYING(ZONE_TYPE);
 
 enum GLOBAL_MESSAGE_TYPE
 {
@@ -423,6 +440,7 @@ enum GLOBAL_MESSAGE_TYPE
     CHAR_INSHOUT,
     CHAR_INZONE
 };
+DECLARE_FORMAT_AS_UNDERLYING(GLOBAL_MESSAGE_TYPE);
 
 enum class TELEPORT_TYPE : uint8
 {
@@ -438,7 +456,9 @@ enum class TELEPORT_TYPE : uint8
     HOMEPOINT       = 9,
     SURVIVAL        = 10,
     WAYPOINT        = 11,
+    ESCHAN_PORTAL   = 12,
 };
+DECLARE_FORMAT_AS_UNDERLYING(TELEPORT_TYPE);
 
 enum ZONEMISC
 {
@@ -458,13 +478,14 @@ enum ZONEMISC
     MISC_LOS_PLAYER_BLOCK = 0x1000, // Players can't use magic/JAs through walls if this is set
     MISC_LOS_OFF          = 0x2000, // Zone should not have LoS checks
 };
+DECLARE_FORMAT_AS_UNDERLYING(ZONEMISC);
 
 struct zoneMusic_t
 {
-    uint8 m_songDay;   // music (daytime)
-    uint8 m_songNight; // music (nighttime)
-    uint8 m_bSongS;    // battle music (solo)
-    uint8 m_bSongM;    // battle music (party)
+    uint16 m_songDay;   // music (daytime)
+    uint16 m_songNight; // music (nighttime)
+    uint16 m_bSongS;    // battle music (solo)
+    uint16 m_bSongM;    // battle music (party)
 };
 
 struct zoneWeather_t
@@ -481,10 +502,10 @@ struct zoneWeather_t
 
 /************************************************************************
  *                                                                       *
- *  zoneLine - уникальный идентификатор пути из одной точки какой-либо   *
- *  зоны в другую точку какой-либо зоны. Зоной отправления является зона,*
- *  хранящая данный zoneLineID. Зона прибытия и точное местоназначение   *
- *  определены в структуре.                                              *
+ *  zoneLine - unique identifier of a path from one point in a zone to   *
+ *  another point in another zone. The departure area is the area,       *
+ *  storing zoneLineID data. Arrival area and exact destination area     *
+ *  defined in the structure.                                            *
  *                                                                       *
  ************************************************************************/
 
@@ -518,8 +539,10 @@ int32 zone_update_weather(uint32 tick, CTaskMgr::CTask* PTask);
 class CZone
 {
 public:
+    DISALLOW_COPY_AND_MOVE(CZone);
+
     ZONEID             GetID();
-    ZONE_TYPE          GetType();
+    ZONE_TYPE          GetTypeMask();
     REGION_TYPE        GetRegionID();
     CONTINENT_TYPE     GetContinentID();
     uint8              getLevelRestriction();
@@ -528,18 +551,18 @@ public:
     uint16             GetTax() const;
     WEATHER            GetWeather();
     uint32             GetWeatherChangeTime() const;
-    const std::string& GetName();
+    const std::string& getName();
     zoneLine_t*        GetZoneLine(uint32 zoneLineID);
 
-    uint8 GetSoloBattleMusic() const;
-    uint8 GetPartyBattleMusic() const;
-    uint8 GetBackgroundMusicDay() const;
-    uint8 GetBackgroundMusicNight() const;
+    uint16 GetSoloBattleMusic() const;
+    uint16 GetPartyBattleMusic() const;
+    uint16 GetBackgroundMusicDay() const;
+    uint16 GetBackgroundMusicNight() const;
 
-    void SetSoloBattleMusic(uint8 music);
-    void SetPartyBattleMusic(uint8 music);
-    void SetBackgroundMusicDay(uint8 music);
-    void SetBackgroundMusicNight(uint8 music);
+    void SetSoloBattleMusic(uint16 music);
+    void SetPartyBattleMusic(uint16 music);
+    void SetBackgroundMusicDay(uint16 music);
+    void SetBackgroundMusicNight(uint16 music);
 
     auto queryEntitiesByName(std::string const& pattern) -> QueryByNameResult_t const&;
 
@@ -547,44 +570,44 @@ public:
     void   SetLocalVar(const char* var, uint32 val);
     void   ResetLocalVars();
 
-    virtual CCharEntity* GetCharByName(std::string name); // finds the player if exists in zone
+    virtual CCharEntity* GetCharByName(std::string const& name);
     virtual CCharEntity* GetCharByID(uint32 id);
 
     // Gets an entity - ignores instances (use CBaseEntity->GetEntity if possible)
-    virtual CBaseEntity* GetEntity(uint16 targid, uint8 filter = -1); // we get a pointer to any entity in the zone
+    virtual CBaseEntity* GetEntity(uint16 targid, uint8 filter = -1); // Get a pointer to any entity in the zone
 
-    bool IsWeatherStatic() const; // The weather in the zone does not require changes (never changes)
+    bool IsWeatherStatic() const;
     bool CanUseMisc(uint16 misc) const;
     void SetWeather(WEATHER weatherCondition);
     void UpdateWeather();
 
-    virtual void SpawnPCs(CCharEntity* PChar);       // We display the characters in the zone
-    virtual void SpawnMOBs(CCharEntity* PChar);      // We display MOBS in the zone
-    virtual void SpawnPETs(CCharEntity* PChar);      // We display Pets in the zone
-    virtual void SpawnNPCs(CCharEntity* PChar);      // display NPCS in the zone
-    virtual void SpawnTRUSTs(CCharEntity* PChar);    // displayTrusTsInZone
-    virtual void SpawnMoogle(CCharEntity* PChar);    // We display Moogle in Moghouse
-    virtual void SpawnTransport(CCharEntity* PChar); // We display transport
+    virtual void SpawnPCs(CCharEntity* PChar);
+    virtual void SpawnMOBs(CCharEntity* PChar);
+    virtual void SpawnPETs(CCharEntity* PChar);
+    virtual void SpawnNPCs(CCharEntity* PChar);
+    virtual void SpawnTRUSTs(CCharEntity* PChar);
+    virtual void SpawnMoogle(CCharEntity* PChar);    // Spawn Moogle in Moghouse in zone (if applicable)
+    virtual void SpawnTransport(CCharEntity* PChar); // Spawn ships/boats in the zone
     void         SavePlayTime();
 
-    virtual void WideScan(CCharEntity* PChar, uint16 radius); // scanning the area with a given radius
+    virtual void WideScan(CCharEntity* PChar, uint16 radius);
 
-    virtual void DecreaseZoneCounter(CCharEntity* PChar); // Add the character to the zone
-    virtual void IncreaseZoneCounter(CCharEntity* PChar); // We remove the character from the zone
+    virtual void DecreaseZoneCounter(CCharEntity* PChar); // Remove a character to the zone
+    virtual void IncreaseZoneCounter(CCharEntity* PChar); // Add a character from the zone
 
-    virtual void InsertNPC(CBaseEntity* PNpc);     // Add to the NPC zone
-    virtual void InsertMOB(CBaseEntity* PMob);     // Add to the mob zone
-    virtual void InsertPET(CBaseEntity* PPet);     // Add to the pet zone
-    virtual void InsertTRUST(CBaseEntity* PTrust); // addATrustToTheZone
+    virtual void InsertNPC(CBaseEntity* PNpc);
+    virtual void InsertMOB(CBaseEntity* PMob);
+    virtual void InsertPET(CBaseEntity* PPet);
+    virtual void InsertTRUST(CBaseEntity* PTrust);
 
-    virtual void DeletePET(CBaseEntity* PPet); // derefs the pet's ID from this zone
+    virtual void DeletePET(CBaseEntity* PPet);
     virtual void DeleteTRUST(CBaseEntity* PTrust);
 
-    virtual void FindPartyForMob(CBaseEntity* PEntity);          // We are looking for a group for a monster
-    virtual void TransportDepart(uint16 boundary, uint16 zone);  // transport is sent, it is necessary to collect passengers
-    virtual void updateCharLevelRestriction(CCharEntity* PChar); // removesTheCharacter'sLevelRestrictionIfTheZoneHasALevelRestrictionItAppliesTheZone'sAfterRemovingIt
+    virtual void FindPartyForMob(CBaseEntity* PEntity);
+    virtual void TransportDepart(uint16 boundary, uint16 zone);  // Collect passengers if ship/boat is departing
+    virtual void updateCharLevelRestriction(CCharEntity* PChar); // Removes the character's level restriction. If the zone has a level restriction, it is applied after it is removed.
 
-    void InsertTriggerArea(CTriggerArea* triggerArea); // Add an active area to the zone
+    void InsertTriggerArea(CTriggerArea* triggerArea);
 
     virtual void TOTDChange(TIMETYPE TOTD);
     virtual void PushPacket(CBaseEntity*, GLOBAL_MESSAGE_TYPE, CBasicPacket*);
@@ -595,19 +618,18 @@ public:
     bool           IsZoneActive() const;
     CZoneEntities* GetZoneEntities();
 
-    time_point      m_TriggerAreaCheckTime;
-    weatherVector_t m_WeatherVector; // the probability of each weather type
+    weatherVector_t m_WeatherVector; // The probability of each weather type
 
-    virtual void ZoneServer(time_point tick, bool checkTriggerAreas);
-    void         CheckTriggerAreas(CCharEntity* PChar);
+    virtual void ZoneServer(time_point tick);
+    virtual void CheckTriggerAreas();
 
-    virtual void ForEachChar(std::function<void(CCharEntity*)> func);
-    virtual void ForEachCharInstance(CBaseEntity* PEntity, std::function<void(CCharEntity*)> func);
-    virtual void ForEachMob(std::function<void(CMobEntity*)> func);
-    virtual void ForEachMobInstance(CBaseEntity* PEntity, std::function<void(CMobEntity*)> func);
-    virtual void ForEachTrust(std::function<void(CTrustEntity*)> func);
-    virtual void ForEachTrustInstance(CBaseEntity* PEntity, std::function<void(CTrustEntity*)> func);
-    virtual void ForEachNpc(std::function<void(CNpcEntity*)> func);
+    virtual void ForEachChar(std::function<void(CCharEntity*)> const& func);
+    virtual void ForEachCharInstance(CBaseEntity* PEntity, std::function<void(CCharEntity*)> const& func);
+    virtual void ForEachMob(std::function<void(CMobEntity*)> const& func);
+    virtual void ForEachMobInstance(CBaseEntity* PEntity, std::function<void(CMobEntity*)> const& func);
+    virtual void ForEachTrust(std::function<void(CTrustEntity*)> const& func);
+    virtual void ForEachTrustInstance(CBaseEntity* PEntity, std::function<void(CTrustEntity*)> const& func);
+    virtual void ForEachNpc(std::function<void(CNpcEntity*)> const& func);
 
     CZone(ZONEID ZoneID, REGION_TYPE RegionID, CONTINENT_TYPE ContinentID, uint8 levelRestriction);
     virtual ~CZone();
@@ -615,10 +637,10 @@ public:
     CBattlefieldHandler* m_BattlefieldHandler; // BCNM Instances in this zone
     CCampaignHandler*    m_CampaignHandler;    // WOTG campaign information for this zone
 
-    CNavMesh* m_navMesh   = nullptr; // zones navmesh for finding paths
+    CNavMesh* m_navMesh   = nullptr;
     ZoneLos*  lineOfSight = nullptr;
 
-    time_point m_LoadedAt; // time zone was loaded
+    time_point m_LoadedAt; // The time the zone was loaded
 
     void LoadNavMesh();
     void LoadZoneLos();
@@ -630,8 +652,8 @@ private:
     CONTINENT_TYPE m_continentID;
     uint8          m_levelRestriction;
     std::string    m_zoneName;
-    uint16         m_zonePort;
-    uint32         m_zoneIP;
+    uint16         m_zonePort{};
+    uint32         m_zoneIP{};
     bool           m_useNavMesh;
 
     WEATHER m_Weather;
@@ -639,15 +661,14 @@ private:
 
     CZoneEntities* m_zoneEntities;
 
-    uint16 m_tax;
-    uint16 m_miscMask;
+    uint16 m_tax{};
+    uint16 m_miscMask{};
 
-    zoneMusic_t m_zoneMusic;
+    zoneMusic_t m_zoneMusic{};
 
     std::unordered_map<std::string, uint32> m_LocalVars;
 
-    triggerAreaList_t m_triggerAreaList;
-    zoneLineList_t    m_zoneLineList;
+    zoneLineList_t m_zoneLineList;
 
     void LoadZoneSettings();
     void LoadZoneLines();
@@ -655,14 +676,17 @@ private:
 
     CTreasurePool* m_TreasurePool;
 
-    time_point m_timeZoneEmpty; // The time_point when the last player left the zone
+    time_point m_timeZoneEmpty; // The time point when the last player left the zone
 
     std::unordered_map<std::string, QueryByNameResult_t> m_queryByNameResults;
 
 protected:
     CTaskMgr::CTask* ZoneTimer; // The pointer to the created timer is Zoneserver.necessary for the possibility of stopping it
+    CTaskMgr::CTask* ZoneTimerTriggerAreas;
 
-    void createZoneTimer();
+    triggerAreaList_t m_triggerAreaList;
+
+    void createZoneTimers();
     void CharZoneIn(CCharEntity* PChar);
     void CharZoneOut(CCharEntity* PChar);
 

@@ -32,17 +32,11 @@
  *                                                                        *
  ************************************************************************/
 CAttackRound::CAttackRound(CBattleEntity* attacker, CBattleEntity* defender)
-: m_subWeaponType(DAMAGE_TYPE::NONE)
 {
     m_attacker          = attacker;
     m_defender          = defender;
     m_kickAttackOccured = false;
     m_sataOccured       = false;
-
-    if (auto* weapon = dynamic_cast<CItemWeapon*>(attacker->m_Weapons[SLOT_SUB]))
-    {
-        m_subWeaponType = weapon->getDmgType();
-    }
 
     // Grab a trick attack assistant.
     m_taEntity = battleutils::getAvailableTrickAttackChar(attacker, attacker->GetBattleTarget());
@@ -191,7 +185,7 @@ void CAttackRound::AddAttackSwing(PHYSICAL_ATTACK_TYPE type, PHYSICAL_ATTACK_DIR
         for (uint8 i = 0; i < count; ++i)
         {
             CAttack attack(m_attacker, m_defender, type, direction, this);
-            m_attackSwings.push_back(attack);
+            m_attackSwings.emplace_back(attack);
 
             if (m_attackSwings.size() == MAX_ATTACKS)
             {
@@ -294,7 +288,7 @@ void CAttackRound::CreateAttacks(CItemWeapon* PWeapon, PHYSICAL_ATTACK_DIRECTION
     // Daken is handled separately in CreateDakenAttack() and Zanshin in src/map/entities/battleentity.cpp#L1768
 
     // Checking Mikage Effect - Hits Vary With Num of Utsusemi Shadows for Main Weapon
-    if (m_attacker->StatusEffectContainer->HasStatusEffect(EFFECT_MIKAGE) && m_attacker->m_Weapons[SLOT_MAIN]->getID() == PWeapon->getID())
+    if (m_attacker->StatusEffectContainer->HasStatusEffect(EFFECT_MIKAGE) && m_attacker->m_Weapons[SLOT_MAIN] && m_attacker->m_Weapons[SLOT_MAIN]->getID() == PWeapon->getID())
     {
         auto shadows = (uint8)m_attacker->getMod(Mod::UTSUSEMI);
         AddAttackSwing(PHYSICAL_ATTACK_TYPE::NORMAL, direction, shadows);
@@ -386,7 +380,7 @@ void CAttackRound::CreateAttacks(CItemWeapon* PWeapon, PHYSICAL_ATTACK_DIRECTION
             if (PAmmo->getQuantity() == ammoCount)
             {
                 charutils::UnequipItem(PChar, SLOT_AMMO);
-                charutils::SaveCharEquip(PChar);
+                PChar->RequestPersist(CHAR_PERSIST::EQUIP);
             }
             charutils::UpdateItem(PChar, loc, slot, -ammoCount);
             PChar->pushPacket(new CInventoryFinishPacket());

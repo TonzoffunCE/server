@@ -3,13 +3,11 @@
 --  Mob: Angra Mainyu
 -- Note: Mega Boss
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
-require("scripts/globals/dynamis")
-require("scripts/globals/status")
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     local mobId = mob:getID()
     for i = mobId + 1, mobId + 4 do
         if not GetMobByID(i):isSpawned() then

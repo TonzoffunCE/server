@@ -2,7 +2,7 @@
 -- Area: Beaucedine Glacier [S]
 --   NM: Scylla
 -----------------------------------
-require("scripts/globals/hunts")
+mixins = { require('scripts/mixins/families/ruszor') }
 -----------------------------------
 local entity = {}
 

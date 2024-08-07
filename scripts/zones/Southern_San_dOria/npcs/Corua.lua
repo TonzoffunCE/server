@@ -4,14 +4,12 @@
 -- Ronfaure Regional Merchant
 -- !pos -66 2 -11 230
 -----------------------------------
-local ID = require("scripts/zones/Southern_San_dOria/IDs")
-require("scripts/globals/events/harvest_festivals")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.SOUTHERN_SAN_DORIA]
 -----------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    onHalloweenTrade(player, trade, npc)
+    xi.events.harvestFestival.onHalloweenTrade(player, trade, npc)
 end
 
 entity.onTrigger = function(player, npc)
@@ -20,21 +18,21 @@ entity.onTrigger = function(player, npc)
     else
         local stock =
         {
-            4389,  29,    -- San d'Orian Carrot
-            4431,  69,    -- San d'Orian Grape
-            639,  110,    -- Chestnut
-            610,   55,    -- San d'Orian Flour
+            xi.item.SAN_DORIAN_CARROT,           33,
+            xi.item.BUNCH_OF_SAN_DORIAN_GRAPES,  79,
+            xi.item.RONFAURE_CHESTNUT,          124,
+            xi.item.BAG_OF_SAN_DORIAN_FLOUR,     62,
         }
 
         player:showText(npc, ID.text.CORUA_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.SANDORIA)
+        xi.shop.general(player, stock, xi.fameArea.SANDORIA)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

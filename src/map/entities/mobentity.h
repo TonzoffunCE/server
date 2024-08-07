@@ -62,7 +62,8 @@ enum ROAMFLAG : uint16
     ROAMFLAG_AMBUSH   = 0x80,  // stays hidden until someone comes close (antlion)
     ROAMFLAG_SCRIPTED = 0x100, // calls lua method for roaming logic
     ROAMFLAG_IGNORE   = 0x200, // ignore all hate, except linking hate
-    ROAMFLAG_STEALTH  = 0x400  // stays name hidden and untargetable until someone comes close (chigoe)
+    ROAMFLAG_STEALTH  = 0x400, // stays name hidden and untargetable until someone comes close (chigoe)
+    ROAMFLAG_FOLLOW   = 0x800, // follows a player when sighted for a little while
 };
 
 enum MOBTYPE
@@ -102,12 +103,6 @@ enum BEHAVIOUR : uint16
 };
 
 class CMobSkillState;
-
-/************************************************************************
- *                                                                       *
- *                                                                       *
- *                                                                       *
- ************************************************************************/
 
 class CMobEntity : public CBattleEntity
 {
@@ -164,7 +159,7 @@ public:
     virtual void Die() override;
 
     virtual void OnWeaponSkillFinished(CWeaponSkillState&, action_t&) override;
-    virtual void OnMobSkillFinished(CMobSkillState&, action_t&);
+    virtual void OnMobSkillFinished(CMobSkillState&, action_t&) override;
     virtual void OnEngage(CAttackState&) override;
 
     virtual bool OnAttack(CAttackState&, action_t&) override;
@@ -178,6 +173,7 @@ public:
 
     virtual void Spawn() override;
     virtual void FadeOut() override;
+    virtual bool isWideScannable() override;
 
     bool   m_AllowRespawn; // if true, allow respawn
     uint32 m_RespawnTime;  // respawn time
@@ -253,9 +249,9 @@ public:
 
     bool m_CallForHelpBlocked;
 
-    CEnmityContainer* PEnmityContainer; // система ненависти монстров
+    CEnmityContainer* PEnmityContainer;
 
-    CMobSpellContainer* SpellContainer; // retrieves spells for the mob
+    CMobSpellContainer* SpellContainer;
 
     bool m_IsClaimable;
 

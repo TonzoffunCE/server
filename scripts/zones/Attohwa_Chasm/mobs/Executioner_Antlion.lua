@@ -2,9 +2,13 @@
 -- Area: Attohwa Chasm
 --  Mob: Executioner Antlion
 -----------------------------------
-mixins = { require("scripts/mixins/families/antlion_ambush_noaggro") }
+mixins = { require('scripts/mixins/families/antlion_ambush_noaggro') }
 -----------------------------------
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 120)
+end
 
 entity.onMobDeath = function(mob, player, optParams)
 end

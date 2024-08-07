@@ -41,11 +41,12 @@ enum ENTITYTYPE : uint8
     TYPE_TRUST  = 0x20,
     TYPE_FELLOW = 0x40,
 };
+DECLARE_FORMAT_AS_UNDERLYING(ENTITYTYPE);
 
 enum class STATUS_TYPE : uint8
 {
     NORMAL        = 0,
-    MOB           = 1,
+    UPDATE        = 1,
     DISAPPEAR     = 2,
     INVISIBLE     = 3,
     STATUS_4      = 4,
@@ -53,6 +54,7 @@ enum class STATUS_TYPE : uint8
     STATUS_18     = 18,
     SHUTDOWN      = 20,
 };
+DECLARE_FORMAT_AS_UNDERLYING(STATUS_TYPE);
 
 enum ANIMATIONTYPE : uint8
 {
@@ -143,8 +145,9 @@ enum MOUNTTYPE : uint8
     MOUNT_BYAKKO         = 33,
     MOUNT_NOBLE_CHOCOBO  = 34, // NOTE: This is currently blank, probably needs additional packets sent
     MOUNT_IXION          = 35,
+    MOUNT_PHUABO         = 36,
     //
-    MOUNT_MAX = 36,
+    MOUNT_MAX = 37,
 };
 
 enum class ALLEGIANCE_TYPE : uint8
@@ -256,8 +259,8 @@ public:
     virtual void Spawn();
     virtual void FadeOut();
 
-    virtual const std::string& GetName();       // Internal name of entity
-    virtual const std::string& GetPacketName(); // Name of entity sent to the client
+    virtual const std::string& getName();       // Internal name of entity
+    virtual const std::string& getPacketName(); // Name of entity sent to the client
 
     uint16 getZone() const; // Current zone
     float  GetXPos() const; // Position of co-ordinate X
@@ -278,8 +281,9 @@ public:
     void         SendZoneUpdate();
 
     void   ResetLocalVars();
-    uint32 GetLocalVar(const char* var);
-    void   SetLocalVar(const char* var, uint32 val);
+    uint32 GetLocalVar(std::string var);
+    void   SetLocalVar(std::string var, uint32 val);
+    auto   GetLocalVars() -> std::map<std::string, uint32>&;
 
     // pre-tick update
     virtual void Tick(time_point) = 0;
@@ -308,8 +312,9 @@ public:
     uint8           speed;        // speed of movement
     uint8           speedsub;     // Additional movement speed parameter
     uint8           namevis;
-    ALLEGIANCE_TYPE allegiance; // what types of targets the entity can fight
-    uint8           updatemask; // what to update next server tick to players nearby
+    ALLEGIANCE_TYPE allegiance;     // what types of targets the entity can fight
+    uint8           updatemask;     // what to update next server tick to players nearby
+    bool            priorityRender; // CliPriorityFlag, will force this entity to render on clients if set. See https://github.com/atom0s/XiPackets/tree/main/world/server/0x0037 (also applies to 0x00E)
 
     bool isRenamed; // tracks if the entity's name has been overidden. Defaults to false.
 
@@ -327,4 +332,4 @@ protected:
     std::map<std::string, uint32> m_localVars;
 };
 
-#endif
+#endif // _BASEENTITY_H

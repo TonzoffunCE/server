@@ -10,17 +10,10 @@
 -- _6ld    : !pos 92 -19 0.1 237
 -- Karst   : !pos 106 -21 0 237
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
-local bastokMarketsID = require('scripts/zones/Bastok_Markets/IDs')
-local bastokMinesID   = require('scripts/zones/Bastok_Mines/IDs')
-local metalworksID    = require('scripts/zones/Metalworks/IDs')
-local portBastokID    = require('scripts/zones/Port_Bastok/IDs')
+local bastokMarketsID = zones[xi.zone.BASTOK_MARKETS]
+local bastokMinesID   = zones[xi.zone.BASTOK_MINES]
+local metalworksID    = zones[xi.zone.METALWORKS]
+local portBastokID    = zones[xi.zone.PORT_BASTOK]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.BASTOK, xi.mission.id.bastok.XARCABARD_LAND_OF_TRUTHS)
@@ -151,7 +144,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 3 and
-                        player:getLocalVar('battlefieldWin') == 160
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.SHADOW_LORD_BATTLE
                     then
                         if
                             player:getCurrentMission(xi.mission.log_id.ZILART) ~= xi.mission.id.zilart.THE_NEW_FRONTIER and

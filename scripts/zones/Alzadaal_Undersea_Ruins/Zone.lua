@@ -1,9 +1,6 @@
 -----------------------------------
 -- Zone: Alzadaal_Undersea_Ruins (72)
 -----------------------------------
-local ID = require('scripts/zones/Alzadaal_Undersea_Ruins/IDs')
-require('scripts/globals/zone')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -16,7 +13,6 @@ zoneObject.onInitialize = function(zone)
     zone:registerTriggerArea(7, -208, -2, -556, -202, 0, -551)  -- map 5 porter (white)
     zone:registerTriggerArea(8,  323, -2, 591, 329, 0, 598)     -- map 6 east porter (white)
     zone:registerTriggerArea(9,  270, -2, 591, 276, 0, 598)     -- map 6 west porter (blue)
-    zone:registerTriggerArea(10, 442, -2, -557, 450, 0, -550)   -- map 7 porter (white)
     zone:registerTriggerArea(11, -63, -10,  56, -57, -8,  62)   -- map 8 NW/Arrapago porter
     zone:registerTriggerArea(12,  17, -6,  56,  23, -4,  62)    -- map 8 NE/Silver Sea/Khim porter
     zone:registerTriggerArea(13, -63, -10, -23, -57, -8, -16)   -- map 8 SW/Zhayolm/bird camp porter
@@ -32,6 +28,7 @@ zoneObject.onInitialize = function(zone)
     zone:registerTriggerArea(23, 394, -1, -619, 487, 1, -540)   -- map 7, Whole zone right before the door (as per BG-Wiki). https://www.bg-wiki.com/ffxi/Aht_Urhgan_Mission_9. ToAU mission 9.
     zone:registerTriggerArea(24,  52, -1, 774, 67, 1, 778)      -- transformations (quest)
     zone:registerTriggerArea(25, 134, -1, -584, 146, 1, -577)   -- transformations (quest)
+    zone:registerTriggerArea(26, 442, -2, -557, 450, 0, -550)   -- map 7 porter (white) (moved after region 23 to avoid spamming events)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -52,9 +49,9 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.afterZoneIn = function(player)
-    player:entityVisualPacket("1pa1")
-    player:entityVisualPacket("1pb1")
-    player:entityVisualPacket("2pb1")
+    player:entityVisualPacket('1pa1')
+    player:entityVisualPacket('1pb1')
+    player:entityVisualPacket('2pb1')
 end
 
 -- TODO: Table teleporter events keyed by triggerArea and perform a direct
@@ -98,7 +95,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             player:startEvent(201)
         end,
 
-        [10] = function(x)
+        [26] = function(x)
             player:startEvent(213)
         end,
 
@@ -155,27 +152,27 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 1 and option == 10 then -- start
         player:updateEvent(0, 0, 0, 0, 0, 0, 0, 0)
     elseif csid == 1 and option == 1 then -- windows
-        player:setLocalVar("UnderseaScouting", player:getLocalVar("UnderseaScouting") + 1)
-        player:updateEvent(player:getLocalVar("UnderseaScouting"), 0, 0, 0, 0, 0, 0, 0)
+        player:setLocalVar('UnderseaScouting', player:getLocalVar('UnderseaScouting') + 1)
+        player:updateEvent(player:getLocalVar('UnderseaScouting'), 0, 0, 0, 0, 0, 0, 0)
     elseif csid == 1 and option == 2 then -- pillars
-        player:setLocalVar("UnderseaScouting", player:getLocalVar("UnderseaScouting") + 2)
-        player:updateEvent(player:getLocalVar("UnderseaScouting"), 0, 0, 0, 0, 0, 0, 0)
+        player:setLocalVar('UnderseaScouting', player:getLocalVar('UnderseaScouting') + 2)
+        player:updateEvent(player:getLocalVar('UnderseaScouting'), 0, 0, 0, 0, 0, 0, 0)
     elseif csid == 1 and option == 3 then -- floor
-        player:setLocalVar("UnderseaScouting", player:getLocalVar("UnderseaScouting") + 4)
-        player:updateEvent(player:getLocalVar("UnderseaScouting"), 0, 0, 0, 0, 0, 0, 0)
+        player:setLocalVar('UnderseaScouting', player:getLocalVar('UnderseaScouting') + 4)
+        player:updateEvent(player:getLocalVar('UnderseaScouting'), 0, 0, 0, 0, 0, 0, 0)
     end
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
-    if csid == 116 and player:getLocalVar("SalvageArrapago") == 1 then -- enter Salvage Silver Sea zone
+zoneObject.onEventFinish = function(player, csid, option, npc)
+    if csid == 116 and player:getLocalVar('SalvageArrapago') == 1 then -- enter Salvage Silver Sea zone
         player:setPos(0, 0, 0, 0, 74)
-    elseif csid == 116 and player:getLocalVar("SalvageSilverSea") == 1 then -- enter Salvage Arrapago zone
+    elseif csid == 116 and player:getLocalVar('SalvageSilverSea') == 1 then -- enter Salvage Arrapago zone
         player:setPos(0, 0, 0, 0, 76)
-    elseif csid == 116 and player:getLocalVar("Nyzul") == 1 then -- enter instanced nyzul isle zone
+    elseif csid == 116 and player:getLocalVar('Nyzul') == 1 then -- enter instanced nyzul isle zone
         player:setPos(0, 0, 0, 0, 77)
     end
 end

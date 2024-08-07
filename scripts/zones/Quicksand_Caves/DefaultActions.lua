@@ -1,6 +1,7 @@
-local ID = require("scripts/zones/Quicksand_Caves/IDs")
+local ID = zones[xi.zone.QUICKSAND_CAVES]
 
 return {
+    ['qm_amk']             = { messageSpecial = ID.text.NOTHING_OUT_OF_ORDINARY },
     ['qm3']               = { messageSpecial = ID.text.NOTHING_OUT_OF_ORDINARY },
     ['qm4']               = { messageSpecial = ID.text.YOU_FIND_NOTHING_OUT },
     ['qm6']               = { messageSpecial = ID.text.ANCIENT_LETTERS_UNREAD },

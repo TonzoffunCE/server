@@ -2,17 +2,21 @@
 -- Area: Pso'Xja
 --   NM: Golden-Tongued Culberry
 -----------------------------------
-mixins = { require("scripts/mixins/families/tonberry") }
-local ID = require("scripts/zones/PsoXja/IDs")
-require("scripts/globals/items")
-require("scripts/globals/status")
+mixins = { require('scripts/mixins/families/tonberry') }
 -----------------------------------
 local entity = {}
 
 entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 900)
+    mob:setMobMod(xi.mobMod.GIL_MIN, 18000)
+    mob:setMobMod(xi.mobMod.GIL_MAX, 19800)
+    mob:setMobMod(xi.mobMod.HP_HEAL_CHANCE, 90)
     mob:setMobMod(xi.mobMod.MAGIC_COOL, 6)
-    mob:addListener("ITEM_DROPS", "ITEM_DROPS_CULBERRY", function(mobArg, loot)
-        loot:addItemFixed(xi.items.UGGALEPIH_PENDANT, mob:getLocalVar("DropRate"))
+    mob:setMod(xi.mod.FASTCAST, 50)
+    mob:setMod(xi.mod.MDEF, 33)
+    mob:setMod(xi.mod.SPELLINTERRUPT, 2)
+    mob:addListener('ITEM_DROPS', 'ITEM_DROPS_CULBERRY', function(mobArg, loot)
+        loot:addItemFixed(xi.item.UGGALEPIH_PENDANT, mob:getLocalVar('DropRate'))
     end)
 end
 

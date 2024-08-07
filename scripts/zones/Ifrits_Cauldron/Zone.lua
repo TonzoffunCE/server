@@ -1,10 +1,7 @@
 -----------------------------------
 -- Zone: Ifrits_Cauldron (205)
 -----------------------------------
-local ID = require('scripts/zones/Ifrits_Cauldron/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/treasure')
-require('scripts/globals/helm')
+local ID = zones[xi.zone.IFRITS_CAULDRON]
 -----------------------------------
 local zoneObject = {}
 
@@ -13,11 +10,11 @@ zoneObject.onInitialize = function(zone)
     GetMobByID(ID.mob.ASH_DRAGON):setRespawnTime(math.random(900, 10800))
 
     xi.treasure.initZone(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -28,7 +25,7 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        player:setPos(-60.296, 48.884, 105.967, 69)
+        player:setPos(100, 0, -320, 188)
     end
 
     return cs
@@ -46,10 +43,10 @@ zoneObject.onGameHour = function(zone)
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

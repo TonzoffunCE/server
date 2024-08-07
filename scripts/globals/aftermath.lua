@@ -1,9 +1,6 @@
 -----------------------------------
 -- Aftermath handling
 -----------------------------------
-require("scripts/globals/status")
-require("scripts/globals/weaponskillids")
-
 xi = xi or {}
 
 xi.aftermath = {}
@@ -16,7 +13,7 @@ xi.aftermath.type =
 } -- TODO: Add Aeonic
 
 -----------------------------------
--- HELPERS : For aftermath eyes onry
+-- HELPERS : For aftermath eyes only
 -----------------------------------
 local getTier1RelicDuration = function(tp)
     return math.floor(tp * 0.02)
@@ -49,7 +46,7 @@ xi.aftermath.effects =
     -----------------------------------
     -- Tier 2 Relic
     -----------------------------------
-    [15] = { mods = { xi.mod.SUBTLE_BLOW, 10, xi.mod.KICK_ATTACK, 15 }, duration = getTier2RelicDuration }, -- Spharai
+    [15] = { mods = { xi.mod.SUBTLE_BLOW, 10, xi.mod.KICK_ATTACK_RATE, 15 }, duration = getTier2RelicDuration }, -- Spharai
     [16] = { mods = { xi.mod.CRITHITRATE, 5, xi.mod.CRIT_DMG_INCREASE, 5 }, duration = getTier2RelicDuration }, -- Mandau
     [17] = { mods = { xi.mod.REGEN, 30, xi.mod.REFRESH, 3 }, duration = getTier2RelicDuration }, -- Excalibur
     [18] = { mods = { xi.mod.CRITHITRATE, 10, xi.mod.ACC, 15 }, duration = getTier2RelicDuration }, -- Ragnarok
@@ -555,6 +552,11 @@ xi.aftermath.effects =
 }
 
 xi.aftermath.addStatusEffect = function(player, tp, weaponSlot, aftermathType)
+    -- Players only!
+    if player:getObjType() ~= xi.objType.PC then
+        return
+    end
+
     local weapon = player:getStorageItem(0, 0, weaponSlot)
     if not weapon then
         return
@@ -606,14 +608,14 @@ xi.aftermath.addStatusEffect = function(player, tp, weaponSlot, aftermathType)
         -- Mythic
         [2] = function(x)
             local tier = math.floor(tp / 1000)
-            local icon = xi.effect["AFTERMATH_LV"..tier]
+            local icon = xi.effect['AFTERMATH_LV'..tier]
             player:addStatusEffectEx(xi.effect.AFTERMATH, icon, id, 0, aftermath.duration[tier], 0, tp, aftermathType)
         end,
 
         -- Empyrean
         [3] = function(x)
             local tier = math.floor(tp / 1000)
-            local icon = xi.effect["AFTERMATH_LV"..tier]
+            local icon = xi.effect['AFTERMATH_LV'..tier]
             player:addStatusEffectEx(xi.effect.AFTERMATH, icon, id, 0, aftermath.duration[tier], 0, tp, aftermathType)
         end
     }

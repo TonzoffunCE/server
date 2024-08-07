@@ -4,8 +4,6 @@
 -- KSNM: Early Bird Catches the Wyrm
 -- For future reference: Trusts are not allowed in this fight
 -----------------------------------
-require("scripts/globals/status")
------------------------------------
 local entity = {}
 
 entity.onMobInitialize = function(mob)
@@ -16,7 +14,7 @@ entity.onMobSpawn = function(mob)
     mob:setTP(3000) -- opens fight with a skill
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:setMod(xi.mod.REGAIN, 100) -- very close to the capture by comparing stop watch measures
     mob:setMod(xi.mod.REGEN, 100) -- might be higher: capture showed no change in HP with Poison II and Bio III procced
 end

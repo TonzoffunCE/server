@@ -1,13 +1,8 @@
 -----------------------------------
 -- Zone: Western_Altepa_Desert (125)
 -----------------------------------
-local ID = require('scripts/zones/Western_Altepa_Desert/IDs')
+local ID = zones[xi.zone.WESTERN_ALTEPA_DESERT]
 require('scripts/quests/i_can_hear_a_rainbow')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/world')
-require('scripts/globals/zone')
-require('scripts/globals/beastmentreasure')
 require('scripts/missions/amk/helpers')
 -----------------------------------
 local zoneObject = {}
@@ -50,20 +45,20 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 2 then
         quests.rainbow.onEventUpdate(player)
     end
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 zoneObject.onZoneWeatherChange = function(weather)
@@ -80,6 +75,15 @@ zoneObject.onZoneWeatherChange = function(weather)
         weather ~= xi.weather.SAND_STORM
     then
         DespawnMob(ID.mob.KING_VINEGARROON)
+    end
+end
+
+zoneObject.afterZoneIn = function(player)
+    -- Send players who zone in an update for the Altepa Gate "doors" so you can see the state from further away
+    -- TODO: these NPCs should be "permanently" in the NPC spawn list for all players -- there's a bug if you get too close and move away they revert to the "needs to be opened" state.
+    -- This currently acts as a small QoL from a long distance, better than nothing, but closer to retail.
+    for i = ID.npc.ALTEPA_GATE, ID.npc.ALTEPA_GATE + 8 do
+        player:sendEntityUpdateToPlayer(GetNPCByID(i), xi.entityUpdate.ENTITY_UPDATE, xi.updateType.UPDATE_COMBAT)
     end
 end
 

@@ -4,13 +4,6 @@
 -----------------------------------
 -- !addmission 4 34
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/keyitems')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.TOAU, xi.mission.id.toau.LEGACY_OF_THE_LOST)
 
@@ -32,7 +25,7 @@ mission.sections =
             onEventFinish =
             {
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 1092 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.LEGACY_OF_THE_LOST then
                         mission:complete(player)
                     end
                 end,

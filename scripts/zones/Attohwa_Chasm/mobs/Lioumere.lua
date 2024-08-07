@@ -2,11 +2,13 @@
 -- Area: Attohwa Chasm
 --  Mob: Lioumere
 -----------------------------------
-mixins = { require("scripts/mixins/families/antlion_ambush") }
-require("scripts/globals/keyitems")
-require("scripts/globals/missions")
+mixins = { require('scripts/mixins/families/antlion_ambush') }
 -----------------------------------
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
+end
 
 entity.onMobDeath = function(mob, player, optParams)
 end

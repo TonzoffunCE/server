@@ -3,8 +3,7 @@
 -- Door: Heavy Iron Gate
 -- !pos -299 -6 -80 79
 -----------------------------------
-local ID = require("scripts/zones/Caedarva_Mire/IDs")
-require("scripts/globals/keyitems")
+local ID = zones[xi.zone.CAEDARVA_MIRE]
 -----------------------------------
 local entity = {}
 
@@ -16,7 +15,7 @@ entity.onTrigger = function(player, npc)
         if player:getZPos() < -78 then
             player:messageSpecial(ID.text.STAGING_GATE_DVUCCA)
             player:messageSpecial(ID.text.STAGING_GATE_INTERACT)
-            player:startEvent(122)
+            player:startOptionalCutscene(122)
         elseif not player:hasKeyItem(xi.ki.PERIQIA_ASSAULT_ORDERS) then
             player:messageSpecial(ID.text.STAGING_GATE_DVUCCA)
             player:messageSpecial(ID.text.STAGING_GATE_INTERACT)
@@ -29,10 +28,10 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

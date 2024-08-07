@@ -1,10 +1,7 @@
 -----------------------------------
 -- Zone: Kuftal_Tunnel (174)
 -----------------------------------
-local ID = require('scripts/zones/Kuftal_Tunnel/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/treasure')
-require('scripts/globals/status')
+local ID = zones[xi.zone.KUFTAL_TUNNEL]
 -----------------------------------
 local zoneObject = {}
 
@@ -15,8 +12,8 @@ zoneObject.onInitialize = function(zone)
     xi.treasure.initZone(zone)
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -27,7 +24,7 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        player:setPos(20.37, -21.104, 275.782, 46)
+        player:setPos(-20, -20, -241, 177)
     end
 
     return cs
@@ -36,10 +33,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 -- NOTE: Data order in these tables matters to determine the range that is being checked.

@@ -1,9 +1,7 @@
 -----------------------------------
 -- A collection of frequently needed teleport shortcuts.
 -----------------------------------
-require("scripts/globals/settings")
-require("scripts/globals/utils")
-require("scripts/globals/zone")
+require('scripts/globals/utils')
 
 xi = xi or {}
 xi.teleport = xi.teleport or {}
@@ -79,7 +77,8 @@ local ids =
     ESCHA_ZITAH           = 64,
     QUFIM_CONFLUENCE      = 65,
     ESCHA_RUAUN           = 66,
-    MISAREAUX_CONFLUENCE  = 67
+    MISAREAUX_CONFLUENCE  = 67,
+    TIDAL_TALISMAN        = 69,
 }
 xi.teleport.id = ids
 
@@ -87,7 +86,7 @@ xi.teleport.id = ids
 -- TELEPORT TO SINGLE DESTINATION
 -----------------------------------
 
-local destinations =
+xi.teleport.destination =
 {
     [ids.DEM]                   = {  220.000,   19.104,  300.000,   0, 108 }, -- (R)
     [ids.HOLLA]                 = {  420.000,   19.104,   20.000,   0, 102 }, -- (R)
@@ -166,6 +165,7 @@ xi.teleport.type =
     HOMEPOINT          = 9,
     SURVIVAL           = 10,
     WAYPOINT           = 11,
+    ESCHAN_PORTAL      = 12,
 }
 
 xi.teleport.runic_portal =
@@ -179,7 +179,7 @@ xi.teleport.runic_portal =
 }
 
 xi.teleport.to = function(player, destination)
-    local dest = destinations[destination]
+    local dest = xi.teleport.destination[destination]
     if dest then
         player:setPos(unpack(dest))
     end
@@ -294,9 +294,9 @@ end
 
 xi.teleport.toAlliedNation = function(player)
     local allegiance = player:getCampaignAllegiance()
-    local sandoriaPos = destinations[ids.SOUTHERN_SAN_DORIA_S]
-    local bastokPos = destinations[ids.BASTOK_MARKETS_S]
-    local windurstPos = destinations[ids.WINDURST_WATERS_S]
+    local sandoriaPos = xi.teleport.destination[ids.SOUTHERN_SAN_DORIA_S]
+    local bastokPos = xi.teleport.destination[ids.BASTOK_MARKETS_S]
+    local windurstPos = xi.teleport.destination[ids.WINDURST_WATERS_S]
 
     if allegiance == xi.alliedNation.SANDORIA then
         player:setPos(unpack(sandoriaPos))
@@ -462,7 +462,7 @@ xi.teleport.escape = function(player)
     if utils.hasKey(zone, escapeDestinations) then
         player:setPos(unpack(escapeDestinations[zone]))
     else
-        printf("WARNING: xi.teleport.escape received undefined escapeDestinations zone (%d)", zone)
+        printf('WARNING: xi.teleport.escape received undefined escapeDestinations zone (%d)', zone)
     end
 end
 
@@ -499,5 +499,39 @@ xi.teleport.explorerMoogleOnEventFinish = function(player, csid, option, event)
         elseif option == 5 and player:delGil(price) then
             xi.teleport.toExplorerMoogle(player, 249)
         end
+    end
+end
+
+xi.teleport.tidalDestinations =
+{
+    [xi.zone.CHATEAU_DORAGUILLE]   = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.NORTHERN_SAN_DORIA]   = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.SOUTHERN_SAN_DORIA]   = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.PORT_SAN_DORIA]       = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.BASTOK_MARKETS]       = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.BASTOK_MINES]         = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.METALWORKS]           = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.PORT_BASTOK]          = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.PORT_WINDURST]        = {   0,   3,   2 , 64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.WINDURST_WALLS]       = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.WINDURST_WATERS]      = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.WINDURST_WOODS]       = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.KAZHAM]               = {   0,   3,   2,  64, xi.zone.RULUDE_GARDENS },
+    [xi.zone.LOWER_JEUNO]          = { -33,  -8, -71,  97, xi.zone.KAZHAM },
+    [xi.zone.PORT_JEUNO]           = { -33,  -8, -71,  97, xi.zone.KAZHAM },
+    [xi.zone.UPPER_JEUNO]          = { -33,  -8, -71,  97, xi.zone.KAZHAM },
+    [xi.zone.RULUDE_GARDENS]       = { -33,  -8, -71,  97, xi.zone.KAZHAM },
+    [xi.zone.MHAURA]               = {  18, -14,  79,  62, xi.zone.SELBINA },
+    [xi.zone.SELBINA]              = {   0,  -8,  59,  62, xi.zone.MHAURA },
+    [xi.zone.AHT_URHGAN_WHITEGATE] = {  12,  -6,  31,  63, xi.zone.NASHMAU },
+    [xi.zone.NASHMAU]              = { -73,   0,   0, 252, xi.zone.AHT_URHGAN_WHITEGATE },
+}
+
+xi.teleport.tidalTeleport = function(player)
+    local zone = player:getZoneID()
+    local destination = xi.teleport.tidalDestinations[zone]
+
+    if destination then
+        player:setPos(unpack(destination))
     end
 end

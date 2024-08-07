@@ -7,14 +7,6 @@
 -- Grilau                : !pos -241.987 6.999 57.887 231
 -- Endracion             : !pos -110 1 -34 230
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/settings')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.THE_SECRET_WEAPON)
 
@@ -140,7 +132,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
-                        player:getLocalVar('battlefieldWin') == 3
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.THE_SECRET_WEAPON
                     then
                         npcUtil.giveKeyItem(player, xi.ki.CRYSTAL_DOWSER)
                         player:setMissionStatus(mission.areaId, 3)

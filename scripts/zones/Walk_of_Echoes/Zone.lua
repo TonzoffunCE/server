@@ -1,8 +1,6 @@
 -----------------------------------
 -- Zone: Walk_of_Echoes
 -----------------------------------
-local ID = require('scripts/zones/Walk_of_Echoes/IDs')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -16,7 +14,7 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        player:setPos(-700.042, 0.4, -441.301, 192)
+        player:setPos(-420, 14, -49, 192)
     end
 
     return cs
@@ -25,10 +23,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

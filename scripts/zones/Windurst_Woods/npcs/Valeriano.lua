@@ -3,8 +3,7 @@
 --  NPC: Valeriano
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Woods/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.WINDURST_WOODS]
 -----------------------------------
 local entity = {}
 
@@ -30,13 +29,13 @@ entity.onTrigger = function(player, npc)
         5059, 28520, -- Scroll of Water Carol II
         4996, 123880  -- Scroll of Mage's Ballad III
     }
-    xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+    xi.shop.general(player, stock, xi.fameArea.WINDURST)
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

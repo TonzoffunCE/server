@@ -6,14 +6,7 @@
 -- Kupipi    : !pos 2 0.1 30 242
 -- Melek     : !pos -80.6 -5.5 157.3 240
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
-local portWindurstID = require('scripts/zones/Port_Windurst/IDs')
+local portWindurstID = zones[xi.zone.PORT_WINDURST]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.BASTOK, xi.mission.id.bastok.THE_EMISSARY_WINDURST2)
@@ -34,7 +27,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 8 and
-                        player:getLocalVar('battlefieldWin') == 96
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_2_MISSION
                     then
                         npcUtil.giveKeyItem(player, xi.ki.KINDRED_CREST)
                         player:delKeyItem(xi.ki.DARK_KEY)

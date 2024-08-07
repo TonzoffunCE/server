@@ -2,9 +2,13 @@
 -- Area: Sacrarium
 --   NM: Balor
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
+end
 
 entity.onMobDeath = function(mob, player, optParams)
 end

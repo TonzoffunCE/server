@@ -9,12 +9,6 @@
 -- Stellar Fulcrum        : !zone 179
 -- Qe'Lov Gate (BCNM)     : !pos -520 -4 17 179
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.ZILART, xi.mission.id.zilart.RETURN_TO_DELKFUTTS_TOWER)
 
@@ -139,7 +133,7 @@ mission.sections =
                 end,
 
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 256 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.RETURN_TO_DELKFUTTS_TOWER then
                         player:setMissionStatus(mission.areaId, 3)
                         player:setPos(-519.99, 1.076, -19.943, 64, xi.zone.STELLAR_FULCRUM)
                     end

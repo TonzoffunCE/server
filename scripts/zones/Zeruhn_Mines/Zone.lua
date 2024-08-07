@@ -1,16 +1,10 @@
 -----------------------------------
 -- Zone: Zeruhn_Mines (172)
 -----------------------------------
-local ID = require('scripts/zones/Zeruhn_Mines/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/quests')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -23,23 +17,23 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        player:setPos(-270.707, 14.159, -20.268, 0)
+        player:setPos(1, 0, 3, 131)
     end
 
     return cs
 end
 
-zoneObject.onConquestUpdate = function(zone, updatetype)
-    xi.conq.onConquestUpdate(zone, updatetype)
+zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

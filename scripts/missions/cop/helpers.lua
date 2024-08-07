@@ -1,12 +1,8 @@
 -----------------------------------
 -- Chains of Promathia Helpers
 -----------------------------------
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
+local hallID = zones[xi.zone.HALL_OF_TRANSFERENCE]
 -----------------------------------
-local hallID = require('scripts/zones/Hall_of_Transference/IDs')
------------------------------------
-
 xi = xi or {}
 xi.cop = xi.cop or {}
 xi.cop.helpers = xi.cop.helpers or {}
@@ -42,8 +38,8 @@ xi.cop.helpers.numPromyvionCompleted = function(player, excludeArea)
     return numKeyItems
 end
 
-xi.cop.helpers.hasCompletedPromyvion = function(player, prevZone)
-    return player:hasKeyItem(xi.cop.helpers.shatteredTelepointInfo[player:getZoneID()][5])
+xi.cop.helpers.hasCompletedPromyvion = function(player, zoneId)
+    return player:hasKeyItem(xi.cop.helpers.shatteredTelepointInfo[zoneId][5])
 end
 
 xi.cop.helpers.promyvionOnZoneIn =

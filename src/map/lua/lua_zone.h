@@ -52,10 +52,10 @@ public:
     ZONEID             getID();
     const std::string& getName();
     REGION_TYPE        getRegionID();
-    ZONE_TYPE          getType();
+    ZONE_TYPE          getTypeMask();
     auto               getBattlefieldByInitiator(uint32 charID) -> std::optional<CLuaBattlefield>;
-    bool               battlefieldsFull(int battlefieldId);
     WEATHER            getWeather();
+    uint32             getUptime();
     void               reloadNavmesh();
     bool               isNavigablePoint(const sol::table& position);
     auto               insertDynamicEntity(sol::table table) -> std::optional<CLuaBaseEntity>;
@@ -65,12 +65,17 @@ public:
     auto getBackgroundMusicDay();
     auto getBackgroundMusicNight();
 
-    void setSoloBattleMusic(uint8 musicId);
-    void setPartyBattleMusic(uint8 musicId);
-    void setBackgroundMusicDay(uint8 musicId);
-    void setBackgroundMusicNight(uint8 musicId);
+    void setSoloBattleMusic(uint16 musicId);
+    void setPartyBattleMusic(uint16 musicId);
+    void setBackgroundMusicDay(uint16 musicId);
+    void setBackgroundMusicNight(uint16 musicId);
 
     sol::table queryEntitiesByName(std::string const& name);
+
+    bool operator==(const CLuaZone& other) const
+    {
+        return this->m_pLuaZone == other.m_pLuaZone;
+    }
 
     static void Register();
 };

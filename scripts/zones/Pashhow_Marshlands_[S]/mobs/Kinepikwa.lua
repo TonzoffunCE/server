@@ -2,8 +2,10 @@
 -- Area: Pashhow Marshlands [S]
 --   NM: Kinepikwa
 -----------------------------------
-require("scripts/globals/hunts")
-mixins = { require("scripts/mixins/job_special") }
+mixins = {
+    require('scripts/mixins/job_special'),
+    require('scripts/mixins/families/peiste'),
+}
 -----------------------------------
 local entity = {}
 

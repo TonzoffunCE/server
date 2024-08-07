@@ -3,10 +3,6 @@
 --  Door: Priming Gate
 --  Involved in quest: Toraimarai Turmoil
 -----------------------------------
-require("scripts/globals/quests")
-require("scripts/globals/settings")
-require("scripts/globals/keyitems")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -25,14 +21,12 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(395)
     end
-
-    return 1
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

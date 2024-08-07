@@ -4,10 +4,6 @@
 -----------------------------------
 -- !addmission 5 36
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.WOTG, xi.mission.id.wotg.DARKNESS_DESCENDS)
 
@@ -72,7 +68,7 @@ mission.sections =
                     -- in various missions.
 
                     if
-                        player:getLocalVar('battlefieldWin') == 353 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.DARKNESS_DESCENDS and
                         mission:getVar(player, 'Status') == 1
                     then
                         mission:setVar(player, 'Status', 2)

@@ -19,16 +19,16 @@
 ===========================================================================
 */
 
+#include "char_check.h"
+
 #include "common/socket.h"
 #include "common/utils.h"
+#include "common/vana_time.h"
 
 #include <cstring>
 
-#include "char_check.h"
-
-#include "../entities/charentity.h"
-#include "../utils/itemutils.h"
-#include "../vana_time.h"
+#include "entities/charentity.h"
+#include "utils/itemutils.h"
 
 CCheckPacket::CCheckPacket(CCharEntity* PChar, CCharEntity* PTarget)
 {
@@ -118,7 +118,7 @@ CCheckPacket::CCheckPacket(CCharEntity* PChar, CCharEntity* PTarget)
         // ref<uint16>(0x0C) = PLinkshell->GetLSID();
         ref<uint16>(0x20) = PLinkshell->GetLSRawColor();
     }
-    if ((PChar->nameflags.flags & FLAG_GM) || !(PTarget->nameflags.flags & FLAG_ANON))
+    if (PChar->visibleGmLevel >= 3 || !PTarget->isAnon())
     {
         ref<uint8>(0x22) = PTarget->GetMJob();
         ref<uint8>(0x23) = PTarget->GetSJob();

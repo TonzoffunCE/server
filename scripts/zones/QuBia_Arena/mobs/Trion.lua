@@ -3,8 +3,7 @@
 --  Mob: Trion
 -- Ally during San d'Oria Mission 9-2
 -----------------------------------
-local ID = require("scripts/zones/QuBia_Arena/IDs")
-require("scripts/globals/status")
+local ID = zones[xi.zone.QUBIA_ARENA]
 -----------------------------------
 local entity = {}
 
@@ -13,7 +12,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
-    mob:addListener("WEAPONSKILL_STATE_ENTER", "WS_START_MSG", function(mobArg, skillID)
+    mob:addListener('WEAPONSKILL_STATE_ENTER', 'WS_START_MSG', function(mobArg, skillID)
         -- Red Lotus Blade
         if skillID == 968 then
             mobArg:showText(mobArg, ID.text.RLB_PREPARE)
@@ -28,22 +27,31 @@ entity.onMobSpawn = function(mob)
 end
 
 entity.onMobDisengage = function(mob)
-    mob:setLocalVar("wait", 0)
 end
 
 entity.onMobRoam = function(mob)
-    local wait = mob:getLocalVar("wait")
-    if wait > 40 then
-        -- pick a random living target from the three enemies
-        local inst = mob:getBattlefield():getArea()
-        local instOffset = ID.mob.HEIR_TO_THE_LIGHT_OFFSET + (14 * (inst-1))
-        local target = GetMobByID(instOffset + math.random(0, 2))
-        if not target:isDead() then
-            mob:addEnmity(target, 0, 1)
-            mob:setLocalVar("wait", 0)
+    local wait = mob:getLocalVar('wait')
+    if wait > 40 and not mob:getTarget() then
+        local battlefieldArea = mob:getBattlefield():getArea()
+        local mobOffset       = ID.mob.WARLORD_ROJGNOJ + (battlefieldArea - 1) * 14
+
+        local livingMobs = {}
+        for mobId = mobOffset, mobOffset + 2 do
+            local target = GetMobByID(mobId)
+
+            if
+                target:isSpawned() and
+                not target:isDead()
+            then
+                table.insert(livingMobs, target)
+            end
         end
+
+        local newTarget = livingMobs[math.random(1, #livingMobs)]
+        mob:addEnmity(newTarget, 0, 1)
+        mob:updateEnmity(newTarget)
     else
-        mob:setLocalVar("wait", wait + 3)
+        mob:setLocalVar('wait', wait + 3)
     end
 end
 

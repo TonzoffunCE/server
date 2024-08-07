@@ -2,13 +2,14 @@
 -- Area: Sacrarium
 --  Mob: Old Professor Mariselle
 -----------------------------------
-local ID = require('scripts/zones/Sacrarium/IDs')
+local ID = zones[xi.zone.SACRARIUM]
 local professorTables = require('scripts/zones/Sacrarium/globals')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/utils')
 -----------------------------------
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+end
 
 entity.onMobSpawn = function(mob)
     mob:setCarefulPathing(true)

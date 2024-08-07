@@ -6,13 +6,6 @@
 -- Kupipi    : !pos 2 0.1 30 242
 -- Mourices  : !pos -50.646 -0.501 -27.642 241
 -----------------------------------
-require('scripts/globals/items')
-require('scripts/globals/keyitems')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.JOURNEY_TO_WINDURST2)
 
@@ -32,7 +25,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 8 and
-                        player:getLocalVar('battlefieldWin') == 96
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_2_MISSION
                     then
                         npcUtil.giveKeyItem(player, xi.ki.KINDRED_CREST)
                         player:delKeyItem(xi.ki.DARK_KEY)
